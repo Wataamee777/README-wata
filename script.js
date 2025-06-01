@@ -9,8 +9,8 @@ function toggleSites() {
   siteList.classList.toggle("hidden");
 }
 function KaihatuLanguage() {
-  const siteList = document.getElementById("KaihatuLanguageList");
-  siteList.classList.toggle("hidden");
+  const KaihatuLanguageList = document.getElementById("KaihatuLanguageList");
+  KaihatuLanguageList.classList.toggle("hidden");
 }
 let tapCount = 0;
 const icon = document.getElementById("main-icon");
