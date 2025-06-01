@@ -2,7 +2,8 @@ body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
-  background-image: url("assets/bg-img.png");
+  background: url('assets/bg-img.png') no-repeat center center fixed;
+  background-size: cover;
   color: #fff;
 }
 
@@ -77,4 +78,34 @@ button:hover {
 
 .hidden {
   display: none;
+}
+#secret-message {
+  text-align: center;
+  margin-top: 1em;
+  font-size: 1.2em;
+  color: #ffcc00;
+  font-weight: bold;
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ffcc00;
+  }
+  to {
+    text-shadow: 0 0 20px #ffcc00, 0 0 30px #ffcc00;
+  }
+}
+
+.glow-effect {
+  animation: iconGlow 1s ease-in-out forwards;
+}
+
+@keyframes iconGlow {
+  0% {
+    filter: drop-shadow(0 0 0 #ffcc00);
+  }
+  100% {
+    filter: drop-shadow(0 0 15px #ffcc00);
+  }
 }
