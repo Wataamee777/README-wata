@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>わたあめえの自己紹介</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* === 全体デザイン === */
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(145deg, #f5f7fa, #e8ebf0);
+      color: #333;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    /* === 星空背景 === */
+    #stars-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: #000;
+    }
+
+    /* === 自己紹介 === */
+    .profile {
+      margin-top: 80px;
+      animation: dropIn 1.5s ease-out forwards;
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+
+    @keyframes dropIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      object-fit: cover;
+      background: #eee;
+      margin-bottom: 10px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .avatar.petted {
+      transform: scale(1.05) rotate(-2deg);
+      box-shadow: 0 0 15px #ffb6c1;
+    }
+
+    .sns a {
+      margin: 0 10px;
+      color: #888;
+      font-size: 1.4rem;
+      transition: color 0.3s;
+    }
+
+    .sns a:hover {
+      color: #ff69b4;
+    }
+
+    /* === サイト一覧 === */
+    .site-list {
+      margin-top: 60px;
+    }
+
+    .site-list h2 {
+      margin-bottom: 20px;
+    }
+
+    .site-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 0 20px;
+    }
+
+    @media (min-width: 600px) {
+      .site-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .site-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    .site-card {
+      background: linear-gradient(145deg, #ffffff, #f0f0f0);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      padding: 25px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeSlideIn 0.8s ease-out forwards;
+      animation-delay: var(--delay);
+      transition: transform 0.3s ease;
+    }
+
+    .site-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .site-card h3 {
+      margin-top: 0;
+      font-size: 1.4rem;
+    }
+
+    .site-card p {
+      color: #555;
+      margin: 10px 0 20px;
+    }
+
+    .site-card a {
+      text-decoration: none;
+      background: #ff69b4;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .site-card a:hover {
+      background: #ff85c1;
+    }
+
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* === 隠しメッセージ === */
+    #secret-message {
+      display: none;
+      text-align: center;
+      margin: 50px 0;
+      color: #ff69b4;
+      font-size: 1.3rem;
+    }
+
+    #secret-message a {
+      display: inline-block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ff69b4;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 星空 -->
+  <canvas id="stars-canvas"></canvas>
+
+  <!-- 自己紹介 -->
+  <div class="profile" id="profile">
+    <img class="avatar" id="avatar" src="https://wataamee777.f5.si/icon.png" alt="アイコン">
+    <div class="sns">
+      <a href="https://twitter.com/yourusername" target="_blank"><i class="fab fa-twitter"></i></a>
+      <a href="https://github.com/yourusername" target="_blank"><i class="fab fa-github"></i></a>
+      <a href="https://www.pixiv.net/users/yourid" target="_blank"><i class="fas fa-paint-brush"></i></a>
+    </div>
+  </div>
+
+  <!-- サイト一覧 -->
+  <section class="site-list">
+    <h2>自作サイト一覧</h2>
+    <div class="site-grid">
+      <div class="site-card" style="--delay: 0s;">
+        <h3>🌸 Project One</h3>
+        <p>作品紹介ページ</p>
+        <a href="https://wataamee777.f5.si/project1" target="_blank">Visit Site</a>
+      </div>
+      <div class="site-card" style="--delay: 0.3s;">
+        <h3>🔧 Tools</h3>
+        <p>便利ツールたち</p>
+        <a href="https://wataamee777.f5.si/tools" target="_blank">Visit Site</a>
+      </div>
+      <div class="site-card" style="--delay: 0.6s;">
+        <h3>🖼️ Gallery</h3>
+        <p>イラストや作品展示</p>
+        <a href="https://wataamee777.f5.si/gallery" target="_blank">Visit Site</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 隠し要素 -->
+  <div id="secret-message">
+    🎉 シークレット発見！わたあめえの秘密プロジェクトへようこそ...<br>
+    <a href="https://wataamee777.f5.si/secret" target="_blank">▶︎ 秘密ページを見る</a>
+  </div>
+
+  <!-- スクリプト -->
+  <script>
+    // 星空エフェクト
+    const canvas = document.getElementById('stars-canvas');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function createStars(count) {
+      stars = [];
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5,
+          speed: Math.random() * 0.5 + 0.1
+        });
+      }
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+        ctx.fill();
+        star.y += star.speed;
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      });
+      requestAnimationFrame(drawStars);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      createStars(200);
+    });
+
+    resizeCanvas();
+    createStars(200);
+    drawStars();
+
+    // 撫で撫ででアイコン変化
+    const avatar = document.getElementById('avatar');
+    let isPetted = false;
+
+    function petAvatar() {
+      if (isPetted) return;
+      isPetted = true;
+      avatar.src = "https://wataamee777.f5.si/icon_galaxy.png";
+      avatar.classList.add('petted');
+      setTimeout(() => {
+        avatar.src = "https://wataamee777.f5.si/icon.png";
+        avatar.classList.remove('petted');
+        isPetted = false;
+      }, 5000);
+    }
+
+    avatar.addEventListener('mousemove', petAvatar);
+    avatar.addEventListener('touchstart', petAvatar);
+
+    // 隠し要素：10回タップで出現
+    let tapCount = 0;
+    let tapTimer;
+
+    avatar.addEventListener('click', () => {
+      tapCount++;
+      clearTimeout(tapTimer);
+      if (tapCount >= 10) {
+        document.getElementById('secret-message').style.display = 'block';
+      } else {
+        tapTimer = setTimeout(() => {
+          tapCount = 0;
+        }, 1500);
+      }
+    });
+  </script>
+
+</body>
+</html>
