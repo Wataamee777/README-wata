@@ -1,3 +1,9 @@
+function playSound() {
+    const audio = document.getElementById("Yukkurisiteittene");
+    audio.currentTime = 0; // 連打でも最初から再生
+    audio.play();
+  }
+
 function copy(text) {
   navigator.clipboard.writeText(text).then(() => {
     alert(`${text} をコピーしました！`);
