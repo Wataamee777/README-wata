@@ -1,3 +1,22 @@
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+// スクロールしたらボタン表示
+window.addEventListener("scroll", () => {
+  if (document.documentElement.scrollTop > 200) {
+    scrollTopBtn.style.display = "block";
+  } else {
+    scrollTopBtn.style.display = "none";
+  }
+});
+
+// クリックでページトップへスムーズに移動
+scrollTopBtn.addEventListener("click", () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+});
+
 function playSound() {
     const audio = document.getElementById("Yukkurisiteittene");
     audio.currentTime = 0; // 連打でも最初から再生
