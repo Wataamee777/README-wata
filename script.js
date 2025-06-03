@@ -56,3 +56,32 @@ icon.addEventListener("click", () => {
     }, 5000);
   }
 });
+// GitHub Secrets から注入（ビルド時に置換される）
+const allowedPassword = "${{ secrets.SECRET_PASS }}";
+const secretUrls = [
+  "${{ secrets.SECRET_URL_1 }}",
+  "${{ secrets.SECRET_URL_2 }}",
+  "${{ secrets.SECRET_URL_3 }}",
+  "${{ secrets.SECRET_URL_4 }}",
+  "${{ secrets.SECRET_URL_5 }}"
+];
+
+function requestSecretLink() {
+  const input = prompt("パスワードを入力してください");
+
+  if (input !== allowedPassword) {
+    alert("パスワードが違います");
+    return;
+  }
+
+  const randomUrl = secretUrls[Math.floor(Math.random() * secretUrls.length)];
+  const secretContainer = document.getElementById("secret-container");
+  const secretUrl = document.getElementById("secret-url");
+
+  secretUrl.textContent = randomUrl;
+  secretContainer.classList.add("active");
+
+  navigator.clipboard.writeText(randomUrl).then(() => {
+    alert("URLをコピーしました！");
+  });
+}
