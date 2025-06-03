@@ -131,3 +131,36 @@ button:hover {
   background-color: #723FBF;
   transform: scale(1.1);
 }
+.secret-container {
+  margin-top: 2em;
+  padding: 1em;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  display: none;
+  text-align: center;
+}
+.secret-container.active {
+  display: block;
+}
+.secret-url {
+  font-weight: bold;
+  word-break: break-word;
+  background: #222;
+  color: #fff;
+  padding: 0.6em 1em;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+.secret-button {
+  margin-top: 2em;
+  padding: 0.7em 1.5em;
+  font-size: 1em;
+  background: #723FBF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.secret-button:hover {
+  background: #5c2da1;
+}
