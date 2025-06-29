@@ -98,3 +98,16 @@ function copy(text) {
     showToast(`${text} をコピーしました！`);
   });
 }
+document.addEventListener('DOMContentLoaded', () => {
+  // 何回来ました (localStorage)
+  const visitEl = document.getElementById('visitTimes');
+  let visits = localStorage.getItem('visitCount');
+
+  if (!visits) {
+    visits = 1;
+  } else {
+    visits = parseInt(visits) + 1;
+  }
+  localStorage.setItem('visitCount', visits);
+  visitEl.textContent = visits;
+});
