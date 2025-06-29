@@ -164,3 +164,40 @@ button:hover {
 .secret-button:hover {
   background: #5c2da1;
 }
+.social-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 1.1em;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.social-list li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.social-list li .icon, 
+.social-list li i {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.social-list li button {
+  margin-left: auto;
+  background-color: #723FBF;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.social-list li button:hover {
+  background-color: #5c2da1;
+}
