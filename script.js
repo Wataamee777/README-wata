@@ -22,7 +22,11 @@ function playSound() {
     audio.currentTime = 0; // 連打でも最初から再生
     audio.play();
   }
-
+function uibeam() {
+    const audio = document.getElementById("uibeam");
+    audio.currentTime = 0; // 連打でも最初から再生
+    audio.play();
+}
 function toggleSites() {
   const siteList = document.getElementById("siteList");
   siteList.classList.toggle("hidden");
