@@ -85,3 +85,16 @@ function requestSecretLink() {
     alert("URLをコピーしました！");
   });
 }
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.className = 'toast-notification';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+function copy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`${text} をコピーしました！`);
+  });
+}
