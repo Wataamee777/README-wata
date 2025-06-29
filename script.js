@@ -23,12 +23,6 @@ function playSound() {
     audio.play();
   }
 
-function copy(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    alert(`${text} をコピーしました！`);
-  });
-}
-
 function toggleSites() {
   const siteList = document.getElementById("siteList");
   siteList.classList.toggle("hidden");
@@ -99,15 +93,11 @@ function copy(text) {
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
-  // 何回来ました (localStorage)
   const visitEl = document.getElementById('visitTimes');
-  let visits = localStorage.getItem('visitCount');
+  if (!visitEl) return; // 要素がないなら何もしない
 
-  if (!visits) {
-    visits = 1;
-  } else {
-    visits = parseInt(visits) + 1;
-  }
+  let visits = localStorage.getItem('visitCount');
+  visits = visits ? parseInt(visits) + 1 : 1;
   localStorage.setItem('visitCount', visits);
   visitEl.textContent = visits;
 });
