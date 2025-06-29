@@ -201,3 +201,19 @@ button:hover {
 .social-list li button:hover {
   background-color: #5c2da1;
 }
+.toast-notification {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #723FBF;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  opacity: 0.95;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 9999;
+  user-select: none;
+}
