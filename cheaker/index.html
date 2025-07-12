@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web チェッカー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Web SEO / SSL / UI チェッカー</h1>
+
+  <textarea id="htmlInput" placeholder="URL もしくは HTML を貼ってください"></textarea>
+  <button id="checkBtn">チェック開始</button>
+
+  <div id="deviceSelector">
+    <label for="device">プレビュー端末：</label>
+    <select id="device">
+      <optgroup label="📱 スマホ">
+        <option value="375x667">iPhone SE (2nd)</option>
+        <option value="390x844">iPhone 13</option>
+        <option value="430x932">iPhone 14/15 Pro Max</option>
+        <option value="412x915">Pixel 6</option>
+        <option value="360x800">Galaxy S21 / Redmi Note 11</option>
+        <option value="360x852">Xperia 5 V</option>
+        <option value="384x880">Huawei P40 Pro</option>
+        <option value="360x780">AQUOS Sense7</option>
+        <option value="414x896">iPhone XR</option>
+        <option value="393x852">iPhone 15</option>
+        <option value="375x812">Galaxy Z Fold4（表）</option>
+        <option value="768x1032">Galaxy Z Fold4（開）</option>
+        <option value="360x760">Android One S9</option>
+      </optgroup>
+      <optgroup label="🧻 タブレット">
+        <option value="810x1080">iPad (9th Gen)</option>
+        <option value="744x1133">iPad mini 6</option>
+        <option value="1024x1366">iPad Pro 12.9</option>
+        <option value="800x1280">Fire HD 10 / Tab M10</option>
+        <option value="800x1340">Galaxy Tab A8</option>
+      </optgroup>
+      <optgroup label="🖥 PC">
+        <option value="1366x768">ノートPC</option>
+        <option value="1440x900">MacBook Air 13"</option>
+        <option value="1920x1080">フルHD</option>
+        <option value="2560x1440">WQHD</option>
+        <option value="3840x2160">4K</option>
+      </optgroup>
+      <option value="custom">カスタム</option>
+    </select>
+    <label><input type="checkbox" id="rotate"> 横向き</label>
+    <div id="customSize" style="display: none;">
+      幅: <input type="number" id="customWidth" value="375"> px　
+      高さ: <input type="number" id="customHeight" value="667"> px
+    </div>
+  </div>
+
+  <section>
+    <h2>SEO結果</h2>
+    <ul id="seoList"></ul>
+
+    <h2>SSLチェック</h2>
+    <ul id="sslList"></ul>
+
+    <h2>ボタンサイズチェック</h2>
+    <ul id="btnList"></ul>
+  </section>
+
+  <h2>プレビュー</h2>
+  <iframe id="preview" sandbox="allow-same-origin"></iframe>
+
+  <script src="script.js"></script>
+</body>
+</html>
