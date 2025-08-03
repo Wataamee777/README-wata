@@ -3,160 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="google-adsense-account" content="ca-pub-7211069031713974">
   <title>わたあめえ - 自己紹介ページ</title>
-  <meta name="description" content="わたあめえの自己紹介ページ。SNSリンク、フォートナイトランキングウィジェットなどを掲載。" />
-  <meta name="keywords" content="わたあめえ, 自己紹介, Fortnite, YouTube, Twitch, Discord, TikTok, Roblox, Minecraft, xbox, プロセカ, ポケポケ, etc" />
+
+  <meta name="description" content="わたあめえの自己紹介ページ。SNSリンク、サイト一覧、お知らせをJSON管理で表示。PWA対応済み。" />
+  <meta name="keywords" content="わたあめえ, 自己紹介, SNS, Fortnite, YouTube, Twitch, Discord, プロセカ, ポケポケ, Roblox" />
   <meta name="author" content="わたあめえ" />
   <link rel="canonical" href="https://wataamee777.f5.si/" />
-  <link rel="icon" href="assets/favicon.png" type="image/png" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <!-- OGP -->
   <meta property="og:title" content="わたあめえ - 自己紹介ページ" />
-  <meta property="og:description" content="わたあめえのSNSリンクやフォートナイトランキングをまとめた自己紹介ページ。" />
+  <meta property="og:description" content="わたあめえのSNSリンクやサイト一覧、お知らせをまとめたページ。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://wataamee777.f5.si/" />
   <meta property="og:image" content="https://wataamee777.f5.si/assets/Yukkuri.png" />
+  <meta property="og:site_name" content="わたあめえ" />
+
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="わたあめえ - 自己紹介ページ" />
-  <meta name="twitter:description" content="SNS・ゲームIDや最新情報まとめ" />
+  <meta name="twitter:description" content="SNS・ゲームIDや最新情報まとめ。" />
   <meta name="twitter:image" content="https://wataamee777.f5.si/assets/favicon.png" />
 
-  <!-- Analytics -->
+  <!-- Favicon -->
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/favicon.gif" />
+  <meta name="theme-color" content="#ff69b4" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VFBZEZFM4M"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
+    function gtag(){ dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-VFBZEZFM4M');
   </script>
 
-  <!-- 構造化データ -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "わたあめえ",
-    "url": "https://wataamee777.f5.si/",
-    "sameAs": [
-      "https://www.youtube.com/channel/UCSGt_coWicg5pits8Nq6Ddg?sub_confirmation=1",
-      "https://twitter.com/wataamee_777",
-      "https://qiita.com/wataamee777",
-      "https://www.tiktok.com/@wataamee314",
-      "https://twitch.tv/wataamee777"
-    ]
-  }
-  </script>
-  <!-- PWA 必須 -->
-<link rel="manifest" href="./manifest.webmanifest">
-<meta name="theme-color" content="#ff69b4">
-<link rel="apple-touch-icon" href="assets/favicon.gif">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<!-- iOS向け追加 -->
-<meta name="mobile-web-app-capable" content="yes">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7211069031713974"
-     crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
 </head>
 <body>
   <header>
-    <div class="icon-wrapper">
-     <img id="main-icon" src="assets/favicon.gif" alt="わたあめえ" />
-    </div>
-    <div id="secret-message" class="hidden">✨秘密のメッセージ: ありがとう！✨</div>
-    <h1 class="title">わたあめえ</h1>
-    <p class="subtitle">ふわっと~ゆっくりしていってね!！</p>
-    <img src="assets/Yukkuri.png" alt="ゆっくりしていってね!!" onclick="playSound()" >
-    <audio id="Yukkurisiteittene" src="assets/Yukkurisiteittene.mp3"></audio>
+    <h1 id="typewriter"></h1>
+    <button id="darkModeToggle" aria-label="Toggle Dark Mode">🌙</button>
   </header>
-  <div class="content-container">
-  <section id="visitor-counter">
-   <script src="https://counter.nanasi-rasi.net/counter.js"></script>   
-   <p>このドメインは累計 <span id="count">0</span> 人が訪れています。</p>
-   <p>このページは累計 <span id="counturl">0</span> 回閲覧されています。</p>
-   <p>あなたはこのサイトに <span id="visitTimes">読み込み中...</span> 回目の訪問です！</p>
-  </section>
-  <section id="KaihatuLanguages">
-    <h2 onclick="KaihatuLanguage()">&xdtri;開発済み言語	&lpar;クリックで展開	&rpar;</h2>
-    <ul id="KaihatuLanguageList" class="hidden">
-      <li><i class="fa-brands fa-html5"></i><p>HTML 	&lpar;HyperTextMarkupLanguage&rpar;</p></li>
-      <li><i class="fa-brands fa-square-js"></i><p>JS	&lpar;JAVAscript&rpar;</p></li>
-      <li><img src="assets/css.png" alt="csslogo"></img><p>CSS	&lpar;CascadingStyleSheets&lpar;</p></li>
-      <li><i class="fa-brands fa-python"></i><p>py	&lpar;python&rpar;</p></li>
-      <li><img src="assets/cplusplus.png" alt="c++"><p>C++	&lpar;Cplusplus&rpar;</p></li>
-      <li><i class="fa-brands fa-java"></i><p>JAVA	&lpar;JAVA&rpar;</p></li>
-    </ul>
-  </section>
-  <section id="socials" class="fade-in">
-    <h2>SNS & ゲームID</h2>
-    <ul class="social-list">
-      <li><i class="fab fa-youtube"></i> YouTube: <span class="id">わたあめえ</span> <button onclick="copy('https://www.youtube.com/channel/UCSGt_coWicg5pits8Nq6Ddg?sub_confirmation=1')">コピー</button></li>
-      <li><i class="fa-brands fa-x-twitter"></i> X: <span class="id">@wataamee_777</span> <button onclick="copy('https://x.com/@wataamee_777')">コピー</button></li>
-      <li><img src="assets/minecraft.png" class="icon"> Minecraft/Xbox: <span class="id">wataamee06417</span> <button onclick="copy('wataamee06417')">コピー</button></li>
-      <li><img src="assets/roblox.png" class="icon"> Roblox: <span class="id">wataamee7777</span> <button onclick="copy('https://www.roblox.com/ja/users/7424117974/profile')">コピー</button></li>
-      <li><img src="assets/pjsekai.png" class="icon"> プロセカ: <span class="id">536427854999375881</span> <button onclick="copy('536427854999375881')">コピー</button></li>
-      <li><img src="assets/pokepoke.png" class="icon"> ポケポケ: <span class="id">5398776699855543</span> <button onclick="copy('5398776699855543')">コピー</button></li>
-      <li><img src="assets/fortnite.png" class="icon"> Fortnite: <span class="id">JXCS_わたあめえ</span> <button onclick="copy('https://fortnitetracker.com/profile/all/JXCS_%e3%82%8f%e3%81%9f%e3%81%82%e3%82%81%e3%81%88777')">コピー</button></li>
-      <li><img src="assets/epic games.png" class="icon"> Epic Games: <span class="id">JXCS_わたあめえ777</span> <button onclick="copy('JXCS_わたあめえ777')">コピー</button></li>
-      <li><i class="fab fa-discord"></i> Discord: <span class="id">wataamee_777</span> <button onclick="copy('wataamee_777')">コピー</button></li>
-      <li><i class="fab fa-tiktok"></i> TikTok: <span class="id">wataamee314</span> <button onclick="copy('https://tiktok.com/@wataamee314')">コピー</button></li>
-      <li><i class="fab fa-spotify"></i> Spotify: <span class="id">わたあめえ</span> <button onclick="copy('https://open.spotify.com/user/31eqe2fyzc4ylow7pugftsupak5y')">コピー</button></li>
-      <li><i class="fab fa-twitch"></i> Twitch: <span class="id">wataamee777</span> <button onclick="copy('https://twitch.tv/wataamee777')">コピー</button></li>
-      <li><img src="assets/qiita.png" alt="qiita"> Qiita: <span class="id">wataamee777</span> <button onclick="copy('https://qiita.com/wataamee777')">コピー</button></li>
-    </ul>
-  </section>  
-  <section id="announcement" class="fade-in">
-    <h2>お知らせ</h2>
-     <li><p> 6/29 サイト主の誕生日</p></li>
-     <li><p> 6/29 id欄がすべて埋まった</p></li>
-     <li><p> ？？？ サイト爆誕</p></li>
-  </section>
-  <img src="assets/ui.gif" alt="時雨うい" onclick="uibeam()" >
-    <audio id="uibeam" src="assets/uibeam.mp3"></audio>
- <h2>Fortnite ランク</h2>
-  <section id="fortnite">
-    <div style="position: relative; width: 100%; padding-top: 56.25%;">
-  <iframe src="https://fortnitejp.news/widget.html?account_id=a9d778dbe31f4e3092dade8e696f8fdd&ranking_type=ranked_blastberry_build&language=ja&gradient_start=%23202377&gradient_end=%23723FBF&color=%23FFFFFF" 
-          frameborder="0" 
-          allowfullscreen
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-  </iframe>
-    </div>
-  </section>
-    <img src="https://raw.githubusercontent.com/Wataamee777/Wataamee777/main/github-metrics.svg" alt="GitHubのプロフ">
-  <section id="sites">
-    <h2 onclick="toggleSites()">&xdtri;サイト	&lpar;クリックで展開 &rpar;</h2>
-    <ul id="siteList" class="hidden">
-      <li><a href="https://wataamee777.f5.si" target="_blank">メインサイト</a></li>
-      <li><a href="https://sakurahp.f5.si" target="_blank">さくら雑談王国</a></li>
-      <li><a href="https://tools.wataamee777.f5.si" target="_blank">ツール</a></li>
-      <li><a href="https://discord.com/invite/ZCXmSCA3g8" target="_blank"><i class="fab fa-discord"></i>さくら雑談王国</a></li>
-      <li><a href="https://wataamee777.github.io/Be-skin-loader" target="_blank">Bedrock版対応！新スキンローダー!</a></li>
-    </ul>
-  </section>
-  <section>
-   <form action="https://getform.io/f/agdlodob" method="POST">
-    <textarea name="message" placeholder="お問い合わせ内容を入力してください" required></textarea><br>
-    <input type="text" name="_honey" style="display:none">
-    <button type="submit">送信する</button>
-   </form>
-  </section>
-  <button onclick="requestSecretLink()" class="secret-button">秘密リンクを取得</button>
-<div id="secret-container" class="secret-container">
-  <p>以下のURLがコピーされました：</p>
-  <div id="secret-url" class="secret-url"></div>
-</div>
 
-  </div>
+  <main>
+    <section id="sns" class="fade-in-scroll">
+      <h2>📱 SNS & ゲームID</h2>
+      <ul id="sns-list"></ul>
+    </section>
+
+    <section id="news" class="fade-in-scroll">
+      <h2>📰 お知らせ</h2>
+      <ul id="news-list"></ul>
+    </section>
+
+    <section id="sites" class="fade-in-scroll">
+      <h2>🌐 サイト一覧</h2>
+      <ul id="site-list"></ul>
+    </section>
+
+    <section id="contact" class="fade-in-scroll">
+      <h2>✉️ お問い合わせ</h2>
+      <form action="https://getform.io/f/agdlodob" method="POST">
+        <textarea name="message" placeholder="お問い合わせ内容を入力してください" required></textarea><br />
+        <input type="text" name="_honey" style="display:none" />
+        <button type="submit">📤 送信する</button>
+      </form>
+    </section>
+
+    <button id="scrollTopBtn" title="トップへ">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+  </main>
+
   <footer>
     <p>&copy; わたあめえ 2025</p>
   </footer>
-<button id="scrollTopBtn" title="上に戻る">
-  <i class="fas fa-arrow-up"></i>
-</button>
+
   <script src="script.js"></script>
+
+  <!-- PWA service worker登録 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('ServiceWorker登録成功', reg))
+          .catch(err => console.log('ServiceWorker登録失敗', err));
+      });
+    }
+  </script>
 </body>
 </html>
