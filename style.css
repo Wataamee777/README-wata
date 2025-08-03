@@ -1,233 +1,156 @@
+/* ベース */
 body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0;
-  background: url('assets/bg-img.png') no-repeat center center fixed;
-  background-size: cover;
-  color: #fff;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 800px;
+  margin: auto;
+  padding: 1rem;
+  background: var(--bg-color, #fff0f6);
+  color: var(--text-color, #333);
+  transition: background-color 0.5s ease, color 0.5s ease;
+  opacity: 0;
+  animation: fadeIn 1s forwards;
 }
 
 header {
+  position: relative;
+  padding-bottom: 2rem;
   text-align: center;
-  padding: 2em 1em;
-  background: linear-gradient(135deg, #55c5ed, #037ffc);
 }
 
-.icon-wrapper img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  transition: transform 0.3s ease;
+/* ダークモードトグル */
+#darkModeToggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(90deg, #ff69b4, #ff1493);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background-position 0.5s ease;
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  z-index: 1000;
+}
+#darkModeToggle:hover {
+  background-position: 100% 0%;
 }
 
-.icon-wrapper img:hover {
-  transform: scale(1.1);
-  content: url("assets/favicon-hover.gif");
+/* タイプライター風 */
+#typewriter {
+  font-weight: 700;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  min-height: 3rem;
+  margin: 0;
 }
 
-h1, h2 {
-  margin: 0.5em 0;
+/* フェードインスクロール */
+.fade-in-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.subtitle {
-  font-size: 1.2em;
-  opacity: 0.85;
-}
-
-section {
-  padding: 2em 1em;
-}
-
-.social-list {
+ul {
   list-style: none;
-  padding: 0;
+  padding-left: 0;
 }
 
-.social-list li {
-  margin: 0.5em 0;
+li {
+  font-size: 1.1rem;
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+li a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+li a:hover {
+  color: #ff1493;
 }
 
 button {
-  margin-left: 10px;
-  padding: 2px 6px;
-  background: #444;
-  color: white;
+  background-color: #ff69b4;
   border: none;
+  color: white;
+  padding: 0.3rem 0.6rem;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.9rem;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
-  background: #666;
+  background-color: #e553b6;
 }
 
-.icon {
-  width: 20px;
-  vertical-align: middle;
-  margin-right: 5px;
+/* 波紋エフェクト */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  animation: ripple-effect 0.6s linear;
+  pointer-events: none;
+  transform: scale(0);
+  opacity: 1;
 }
 
-.fade-in {
-  animation: fadeIn 2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.hidden {
-  display: none;
-}
-#secret-message {
-  text-align: center;
-  margin-top: 1em;
-  font-size: 1.2em;
-  color: #ffcc00;
-  font-weight: bold;
-  animation: glow 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ffcc00;
-  }
+@keyframes ripple-effect {
   to {
-    text-shadow: 0 0 20px #ffcc00, 0 0 30px #ffcc00;
+    transform: scale(4);
+    opacity: 0;
   }
 }
 
-.glow-effect {
-  animation: iconGlow 1s ease-in-out forwards;
-}
-
-@keyframes iconGlow {
-  0% {
-    filter: drop-shadow(0 0 0 #ffcc00);
-  }
-  100% {
-    filter: drop-shadow(0 0 15px #ffcc00);
-  }
-}
+/* トップへボタン */
 #scrollTopBtn {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 99;
-  font-size: 18px;
-  background-color: #202377;
-  color: white;
+  background: #ff69b4;
   border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 12px 16px;
+  color: white;
+  padding: 0.8rem 1rem;
   border-radius: 50%;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  display: none; /* 最初は非表示 */
-  transition: all 0.3s ease;
-}
-
-#scrollTopBtn:hover {
-  background-color: #723FBF;
-  transform: scale(1.1);
-}
-.secret-container {
-  margin-top: 2em;
-  padding: 1em;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  display: none;
-  text-align: center;
-}
-.secret-container.active {
-  display: block;
-}
-.secret-url {
-  font-weight: bold;
-  word-break: break-word;
-  background: #222;
-  color: #fff;
-  padding: 0.6em 1em;
-  border-radius: 6px;
-  margin-top: 10px;
-}
-.secret-button {
-  margin-top: 2em;
-  padding: 0.7em 1.5em;
-  font-size: 1em;
-  background: #723FBF;
-  color: white;
-  border: none;
-  border-radius: 8px;
   cursor: pointer;
-}
-.secret-button:hover {
-  background: #5c2da1;
-}
-.social-list li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 0;
-  font-size: 1.1em;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-}
-
-.social-list li:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.social-list li .icon, 
-.social-list li i {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.social-list li button {
-  margin-left: auto;
-  background-color: #723FBF;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.25s ease;
-}
-
-.social-list li button:hover {
-  background-color: #5c2da1;
-}
-.toast-notification {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #723FBF;
-  color: white;
-  padding: 8px 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  opacity: 0.95;
-  font-weight: 600;
+  font-size: 1.3rem;
+  opacity: 0;
   pointer-events: none;
-  z-index: 9999;
-  user-select: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
 }
-#visitor-counter {
-  background: rgba(114, 63, 191, 0.3);
-  padding: 1em 2em;
-  border-radius: 12px;
-  margin: 2em 0;
-  text-align: center;
-  font-size: 1.2em;
-  color: #fff;
-  user-select: none;
+#scrollTopBtn.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-#visitor-counter p {
-  margin: 0.5em 0;
+/* ダークモード用変数 */
+:root {
+  --bg-color: #fff0f6;
+  --text-color: #333;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #eee;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
