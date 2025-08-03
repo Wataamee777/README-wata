@@ -1,107 +1,107 @@
-const scrollTopBtn = document.getElementById("scrollTopBtn");
-
-// スクロールしたらボタン表示
-window.addEventListener("scroll", () => {
-  if (document.documentElement.scrollTop > 200) {
-    scrollTopBtn.style.display = "block";
-  } else {
-    scrollTopBtn.style.display = "none";
-  }
-});
-
-// クリックでページトップへスムーズに移動
-scrollTopBtn.addEventListener("click", () => {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-});
-
-function playSound() {
-    const audio = document.getElementById("Yukkurisiteittene");
-    audio.currentTime = 0; // 連打でも最初から再生
-    audio.play();
-  }
-function uibeam() {
-    const audio = document.getElementById("uibeam");
-    audio.currentTime = 0; // 連打でも最初から再生
-    audio.play();
-}
-function toggleSites() {
-  const siteList = document.getElementById("siteList");
-  siteList.classList.toggle("hidden");
-}
-function KaihatuLanguage() {
-  const KaihatuLanguageList = document.getElementById("KaihatuLanguageList");
-  KaihatuLanguageList.classList.toggle("hidden");
-}
-let tapCount = 0;
-const icon = document.getElementById("main-icon");
-const secretMessage = document.getElementById("secret-message");
-
-icon.addEventListener("click", () => {
-  tapCount++;
-  if (tapCount === 3) {
-    // 3回目タップ時の処理
-    icon.classList.add("glow-effect");
-    secretMessage.classList.remove("hidden");
-
-    // 5秒後に光りとメッセージを消す
-    setTimeout(() => {
-      icon.classList.remove("glow-effect");
-      secretMessage.classList.add("hidden");
-      tapCount = 0; // カウントリセット
-    }, 5000);
-  }
-});
-// GitHub Secrets から注入（ビルド時に置換される）
-const allowedPassword = "${{ secrets.SECRET_PASS }}";
-const secretUrls = [
-  "${{ secrets.SECRET_URL_1 }}",
-  "${{ secrets.SECRET_URL_2 }}",
-  "${{ secrets.SECRET_URL_3 }}",
-  "${{ secrets.SECRET_URL_4 }}",
-  "${{ secrets.SECRET_URL_5 }}"
-];
-
-function requestSecretLink() {
-  const input = prompt("パスワードを入力してください");
-
-  if (input !== allowedPassword) {
-    alert("パスワードが違います");
-    return;
-  }
-
-  const randomUrl = secretUrls[Math.floor(Math.random() * secretUrls.length)];
-  const secretContainer = document.getElementById("secret-container");
-  const secretUrl = document.getElementById("secret-url");
-
-  secretUrl.textContent = randomUrl;
-  secretContainer.classList.add("active");
-
-  navigator.clipboard.writeText(randomUrl).then(() => {
-    alert("URLをコピーしました！");
-  });
-}
-function showToast(msg) {
-  const toast = document.createElement('div');
-  toast.textContent = msg;
-  toast.className = 'toast-notification';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2000);
+// JSONをfetchしてパース
+async function fetchJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Failed to load ${path}`);
+  return await res.json();
 }
 
-function copy(text) {
+// コピー機能
+function copyText(btn, text) {
   navigator.clipboard.writeText(text).then(() => {
-    showToast(`${text} をコピーしました！`);
+    const prevText = btn.textContent;
+    btn.textContent = '✅ コピー済み';
+    setTimeout(() => {
+      btn.textContent = prevText;
+    }, 1500);
   });
 }
-document.addEventListener('DOMContentLoaded', () => {
-  const visitEl = document.getElementById('visitTimes');
-  if (!visitEl) return; // 要素がないなら何もしない
 
-  let visits = localStorage.getItem('visitCount');
-  visits = visits ? parseInt(visits) + 1 : 1;
-  localStorage.setItem('visitCount', visits);
-  visitEl.textContent = visits;
+// リスト描画
+function renderList(id, data, isSns = false, isNews = false) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = '';
+  data.forEach(item => {
+    const li = document.createElement('li');
+    if (isSns) {
+      li.innerHTML = `${item.emoji} <strong>${item.service}</strong>: <span class="id">${item.id}</span> <button onclick="copyText(this,'${item.copy}')">コピー</button>`;
+    } else if (isNews) {
+      li.textContent = `${item.emoji} [${item.date}] ${item.text}`;
+    } else {
+      li.innerHTML = `${item.emoji} <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.name}</a>`;
+    }
+    ul.appendChild(li);
+  });
+}
+
+// タイプライター風
+const text = "わたあめえ - 自己紹介ページ";
+const typewriterElem = document.getElementById("typewriter");
+let index = 0;
+function typeWriter() {
+  if (index < text.length) {
+    typewriterElem.textContent += text.charAt(index);
+    index++;
+    setTimeout(typeWriter, 120);
+  }
+}
+typeWriter();
+
+// ダークモード切替
+const darkToggle = document.getElementById("darkModeToggle");
+darkToggle.addEventListener("click", () => {
+  if (document.documentElement.getAttribute("data-theme") === "dark") {
+    document.documentElement.removeAttribute("data-theme");
+    darkToggle.textContent = "🌙";
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    darkToggle.textContent = "☀️";
+  }
 });
+
+// スクロールでフェードイン
+const faders = document.querySelectorAll(".fade-in-scroll");
+const appearOptions = {
+  threshold: 0,
+  rootMargin: "0px 0px -50px 0px",
+};
+
+const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    entry.target.classList.add("visible");
+    appearOnScroll.unobserve(entry.target);
+  });
+}, appearOptions);
+
+faders.forEach(fader => {
+  appearOnScroll.observe(fader);
+});
+
+// トップへスクロールボタン制御
+const scrollBtn = document.getElementById("scrollTopBtn");
+window.addEventListener("scroll", () => {
+  if (window.scrollY > 200) {
+    scrollBtn.classList.add("visible");
+  } else {
+    scrollBtn.classList.remove("visible");
+  }
+});
+scrollBtn.addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+// 初期化
+async function init() {
+  try {
+    const sns = await fetchJSON('./sns.json');
+    renderList('sns-list', sns, true);
+    const news = await fetchJSON('./news.json');
+    renderList('news-list', news, false, true);
+    const sites = await fetchJSON('./sites.json');
+    renderList('site-list', sites);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+init();
