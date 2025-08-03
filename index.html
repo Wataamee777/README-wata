@@ -94,16 +94,5 @@
   </footer>
 
   <script src="script.js"></script>
-
-  <!-- PWA service worker登録 -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('ServiceWorker登録成功', reg))
-          .catch(err => console.log('ServiceWorker登録失敗', err));
-      });
-    }
-  </script>
 </body>
 </html>
