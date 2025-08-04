@@ -1,10 +1,20 @@
+/* ===== 共通設定 ===== */
+:root {
+  --bg-color: #fff0f6;
+  --text-color: #333;
+}
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #eee;
+}
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   max-width: 800px;
   margin: auto;
   padding: 1rem;
-  background: var(--bg-color, #fff0f6);
-  color: var(--text-color, #333);
+  background: var(--bg-color);
+  color: var(--text-color);
   transition: background-color 0.5s ease, color 0.5s ease;
   opacity: 0;
   animation: fadeIn 1s forwards;
@@ -19,22 +29,41 @@ body::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: var(--bg-color, #fff0f6); /* or 画像指定もOK */
-  z-index: -9999;
+  background: var(--bg-color); /* 背景色固定 */
+  z-index: -1; /* 最背面に */
 }
 
-header {
-  position: relative;
-  padding-bottom: 2rem;
-  text-align: center;
+/* ===== フェードインアニメーション ===== */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
-
-/* これを追加 */
-.fade-in-active {
+.fade-in-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in-scroll.fade-in-active {
   opacity: 1;
   transform: translateY(0);
 }
 
+/* ===== ヘッダー ===== */
+header {
+  text-align: center;
+  padding-bottom: 2rem;
+  position: relative;
+}
+#typewriter {
+  font-weight: 700;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  min-height: 3rem;
+  margin: 0;
+}
+
+/* ===== ダークモードボタン ===== */
 #darkModeToggle {
   position: fixed;
   top: 1rem;
@@ -46,39 +75,20 @@ header {
   border-radius: 20px;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: background-position 0.5s ease;
   background-size: 200% 100%;
   background-position: 0% 0%;
+  transition: background-position 0.5s ease;
   z-index: 1000;
 }
 #darkModeToggle:hover {
   background-position: 100% 0%;
 }
 
-#typewriter {
-  font-weight: 700;
-  font-size: 2.5rem;
-  letter-spacing: 2px;
-  min-height: 3rem;
-  margin: 0;
-}
-
-/* フェードイン用スクロールアニメーション */
-.fade-in-scroll {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.fade-in-scroll.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
+/* ===== リスト系 ===== */
 ul {
   list-style: none;
   padding-left: 0;
 }
-
 li {
   font-size: 1.1rem;
   margin: 0.5rem 0;
@@ -86,7 +96,6 @@ li {
   align-items: center;
   gap: 0.5rem;
 }
-
 li a {
   color: inherit;
   text-decoration: none;
@@ -96,7 +105,7 @@ li a:hover {
   color: #ff1493;
 }
 
-/* ボタンのリップル効果 */
+/* ===== ボタン（コピーなど） ===== */
 button {
   background-color: #ff69b4;
   border: none;
@@ -112,6 +121,8 @@ button {
 button:hover {
   background-color: #e553b6;
 }
+
+/* リップル効果 */
 .ripple {
   position: absolute;
   border-radius: 50%;
@@ -128,7 +139,7 @@ button:hover {
   }
 }
 
-/* スクロールトップボタン */
+/* ===== スクロールトップボタン ===== */
 #scrollTopBtn {
   position: fixed;
   bottom: 30px;
@@ -150,23 +161,7 @@ button:hover {
   pointer-events: auto;
 }
 
-/* カラーテーマ */
-:root {
-  --bg-color: #fff0f6;
-  --text-color: #333;
-}
-[data-theme="dark"] {
-  --bg-color: #121212;
-  --text-color: #eee;
-}
-
-/* フェードインアニメーション */
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-/* Discordプロフィールセクション */
+/* ===== Discordプロフィールセクション ===== */
 #discord-profile {
   display: flex;
   align-items: center;
@@ -176,7 +171,6 @@ button:hover {
   background: var(--bg-color);
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 #discord-avatar {
@@ -185,7 +179,6 @@ button:hover {
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 0 10px #7289da;
-  transition: box-shadow 0.3s ease;
 }
 
 #discord-info {
@@ -211,14 +204,12 @@ button:hover {
 #discord-badges {
   margin-top: 0.5rem;
 }
-
 #discord-badges img {
   height: 24px;
   margin-right: 6px;
   vertical-align: middle;
   transition: transform 0.3s ease;
 }
-
 #discord-badges img:hover {
   transform: scale(1.2);
   cursor: pointer;
