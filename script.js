@@ -47,19 +47,19 @@ function loadJSON(id, url, formatter) {
 loadJSON(
   'sns-list',
   './sns.json',
-  item => `${item.emoji} <strong>${item.name}</strong>: <code>${item.value}</code> <button onclick="copy('${item.copy}')">コピー</button>`
+  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button onclick="copy('${item.copy}')">コピー</button>`
 );
 
 loadJSON(
   'site-list',
   './sites.json',
-  item => `🔗 <a href="${item.url}" target="_blank">${item.name}</a>`
+  item => `${item.emoji} <a href="${item.url}" target="_blank">${item.name}</a>`
 );
 
 loadJSON(
   'news-list',
   './news.json',
-  item => `🗓️ ${item.date} - ${item.message}`
+  item => `${item.emoji} ${item.date} - ${item.text}`
 );
 
 function copy(text) {
