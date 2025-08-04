@@ -16,6 +16,12 @@ header {
   text-align: center;
 }
 
+/* これを追加 */
+.fade-in-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 #darkModeToggle {
   position: fixed;
   top: 1rem;
