@@ -29,6 +29,24 @@ window.addEventListener('scroll', () => {
 scrollBtn?.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
+  
+function darkModeToggleClick(e) {
+  const ripple = document.createElement('span');
+  ripple.classList.add('ripple');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  ripple.style.left = `${x}px`;
+  ripple.style.top = `${y}px`;
+
+  e.currentTarget.appendChild(ripple);
+
+  ripple.addEventListener('animationend', () => {
+    ripple.remove();
+  });
+}
 
 function loadJSON(id, url, formatter) {
   fetch(url)
