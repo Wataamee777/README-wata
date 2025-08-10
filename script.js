@@ -61,13 +61,20 @@ function loadJSON(id, url, formatter) {
     })
     .catch(e => console.error(`${id} 読み込み失敗`, e));
 }
-
-loadJSON(
-  'sns-list',
-  './sns.json',
-  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button onclick="copy${JSON.stringify(item.copy)})">コピー</button>`
-);
-
+  
+loadJSON(     
+  'sns-list',     
+  './sns.json',     
+  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button class="copy-btn" data-copy="${item.copy}">コピー</button>`  
+  );    
+  document.getElementById('sns-list').addEventListener('click', e => {     
+  if (e.target.classList.contains('copy-btn')) {       
+    const text = e.target.getAttribute('data-copy');      
+  if (!text) return;        navigator.clipboard.writeText(text)        
+    .then(() => alert('コピーしたよ！'))         
+    .catch(() => alert('コピーに失敗したよ…'));    
+  }
+  };
 loadJSON(
   'site-list',
   './sites.json',
