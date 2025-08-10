@@ -69,13 +69,23 @@ function copy(text) {
 }
 
 function fetchDiscordProfile() {
+  const defaultAvatarUrl = "https://cdn.discordapp.com/avatars/1099098129338466385/77e7e6a9bf6d886ebb971fcdc5ec92b6.webp?size=1024";
+  const avatarElem = document.getElementById('discord-avatar');
+
+  // 先に固定画像を表示
+  avatarElem.src = defaultAvatarUrl;
+
   const url = 'https://discord-profile-get-api.onrender.com/profile/1099098129338466385';
 
   setTimeout(() => {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        document.getElementById('discord-avatar').src ='https://cdn.discordapp.com/avatars/1099098129338466385/77e7e6a9bf6d886ebb971fcdc5ec92b6.webp?size=1024'||data.avater;
+        // 取得できたら置き換え（nullや空文字はスキップ）
+        if (data.avatar && data.avatar.trim() !== "") {
+          avatarElem.src = data.avatar;
+        }
+
         document.getElementById('discord-name').textContent = `👤 ${data.tag}`;
 
         const statusMap = {
@@ -90,7 +100,7 @@ function fetchDiscordProfile() {
         if (data.activities && data.activities.length > 0) {
           const custom = data.activities.find(a => a.type === 4);
           if (custom && custom.state) {
-            document.getElementById('discord-custom').textContent = `📝 ${data.customStatus}`;
+            document.getElementById('discord-custom').textContent = `📝 ${custom.state}`;
           }
         }
 
