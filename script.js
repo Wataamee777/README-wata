@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const typewriterElem = document.getElementById('typewriter');
-  const text = 'わたあめえ - 自己紹介ページ';
+  const text = 'Hello world from discord!!';
   let i = 0;
 
   function type() {
