@@ -1,17 +1,17 @@
-function typewriterEffect(element, text, delay = 100) {
-  let i = 0;
-  element.textContent = '';
-  const timer = setInterval(() => {
-    element.textContent += text.charAt(i);
-    i++;
-    if (i >= text.length) clearInterval(timer);
-  }, delay);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const typewriterElem = document.getElementById('typewriter');
-  const text = 'Hello world from discord!!'; // 好きな文に変えてOK
-  typewriterEffect(typewriterElem, text, 120);
+  const text = 'わたあめえ - 自己紹介ページ';
+  let i = 0;
+
+  function type() {
+    if (i < text.length) {
+      typewriterElem.textContent += text.charAt(i);
+      i++;
+      setTimeout(type, 120);
+    }
+  }
+
+  type();
 });
 
 const darkModeToggle = document.getElementById('darkModeToggle');
