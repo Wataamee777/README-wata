@@ -65,16 +65,22 @@ function loadJSON(id, url, formatter) {
 loadJSON(     
   'sns-list',     
   './sns.json',     
-  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button class="copy-btn" data-copy="${item.copy}">コピー</button>`  
+item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button data-copy="${item.copy}">コピー</button>`
   );    
-  document.getElementById('sns-list').addEventListener('click', e => {     
-  if (e.target.classList.contains('copy-btn')) {       
-    const text = e.target.getAttribute('data-copy');      
-  if (!text) return;        navigator.clipboard.writeText(text)        
-    .then(() => alert('コピーしたよ！'))         
-    .catch(() => alert('コピーに失敗したよ…'));    
+ // loadJSONの中で作るボタンはクリック時イベントつけられないから
+// 親ulにイベント委譲する方法がオススメ
+
+document.getElementById('sns-list').addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON') {
+    const text = e.target.getAttribute('data-copy');
+    if (text) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert('コピーしたよ！'))
+        .catch(() => alert('コピー失敗…'));
+    }
   }
-  };
+});
+
 loadJSON(
   'site-list',
   './sites.json',
