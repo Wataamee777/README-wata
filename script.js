@@ -1,4 +1,19 @@
+function typewriterEffect(element, text, delay = 100) {
+  let i = 0;
+  element.textContent = '';
+  const timer = setInterval(() => {
+    element.textContent += text.charAt(i);
+    i++;
+    if (i >= text.length) clearInterval(timer);
+  }, delay);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  const typewriterElem = document.getElementById('typewriter');
+  const text = 'Hello world from discord!!'; // 好きな文に変えてOK
+  typewriterEffect(typewriterElem, text, 120);
+});
+
 const darkModeToggle = document.getElementById('darkModeToggle');
 
 (function initTheme() {
