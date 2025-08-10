@@ -85,7 +85,8 @@ function copy(text) {
     alert('コピーしたよ！');
   });
 }
-
+window.copy = copy; // ← これでグローバル化
+  
 function fetchDiscordProfile() {
   const defaultAvatarUrl = "https://cdn.discordapp.com/avatars/1099098129338466385/77e7e6a9bf6d886ebb971fcdc5ec92b6.webp?size=1024";
   const avatarElem = document.getElementById('discord-avatar');
