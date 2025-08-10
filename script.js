@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   type();
-});
 
 const darkModeToggle = document.getElementById('darkModeToggle');
 
@@ -219,4 +218,5 @@ if ('serviceWorker' in navigator) {
     .then(reg => console.log('✅ Service Worker 登録成功'))
     .catch(err => console.warn('❌ SW登録失敗', err));
 }
+  
 });
