@@ -65,7 +65,7 @@ function loadJSON(id, url, formatter) {
 loadJSON(
   'sns-list',
   './sns.json',
-  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button onclick="copy('${item.copy}')">コピー</button>`
+  item => `${item.emoji} <strong>${item.service}</strong>: <code>${item.id}</code> <button onclick="copy${JSON.stringify(item.copy)})">コピー</button>`
 );
 
 loadJSON(
