@@ -3,7 +3,7 @@
   --bg-color: #fff0f6;
   --text-color: #333;
 }
-[data-theme="dark"] {
+body.dark {
   --bg-color: #121212;
   --text-color: #eee;
 }
