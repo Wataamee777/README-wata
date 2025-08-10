@@ -75,7 +75,7 @@ function fetchDiscordProfile() {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        document.getElementById('discord-avatar').src = data.avatar || '';
+        document.getElementById('discord-avatar').src = data.avatar || 'https://cdn.discordapp.com/avatars/1099098129338466385/77e7e6a9bf6d886ebb971fcdc5ec92b6.webp?size=1024';
         document.getElementById('discord-name').textContent = `👤 ${data.tag}`;
 
         const statusMap = {
