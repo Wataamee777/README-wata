@@ -214,3 +214,10 @@ button:hover {
   transform: scale(1.2);
   cursor: pointer;
 }
+/* その他 */
+#form-textarea {
+  border-radius: 10px;
+    padding: 10px;
+    border: none;
+    background-color: #ff69da22;
+}
