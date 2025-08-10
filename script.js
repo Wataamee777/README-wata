@@ -90,7 +90,7 @@ function fetchDiscordProfile() {
         if (data.activities && data.activities.length > 0) {
           const custom = data.activities.find(a => a.type === 4);
           if (custom && custom.state) {
-            document.getElementById('discord-custom').textContent = `📝 ${custom.state}`;
+            document.getElementById('discord-custom').textContent = `📝 ${data.customStatus}`;
           }
         }
 
