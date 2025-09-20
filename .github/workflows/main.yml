@@ -2,7 +2,7 @@ name: Update Discord Profile
 
 on:
   schedule:
-    - cron: "*/10 * * * *" # 10分ごと
+    - cron: "*/5 * * * *" # 10分ごと
   workflow_dispatch:
 
 jobs:
