@@ -32,25 +32,33 @@ jobs:
           curl -s -H "Authorization: Bot $TOKEN" \
             https://discord.com/api/v10/guilds/$GUILD_ID > guild.json
 
-          # バッジ日本語対応
-          echo '{
-            "1": "Discordスタッフ",
-            "2": "パートナー",
-            "4": "HypeSquad",
-            "8": "バグハンター（レベル1）",
-            "64": "HypeSquad Bravery（赤）",
-            "128": "HypeSquad Brilliance（青）",
-            "256": "HypeSquad Balance（緑）",
-            "512": "早期サポーター",
-            "16384": "バグハンター（レベル2）",
-            "131072": "認証済みBot開発者",
-            "4194304": "アクティブデベロッパー",
-            "33554432": "クエスト参加者",
-            "41943040": "オーブ保持者"
-          }' > flags.json
+          # 外部 jq で最低限整形
+          jq -s --arg base "$base" -f .github/workflows/process_discord.jq profile.json member.json guild.json > discord_min.json
 
-          # 外部 jq スクリプトを呼び出して JSON 整形
-          jq -s --rawfile flags flags.json --arg base "$base" -f .github/workflows/process_discord.jq profile.json member.json guild.json > discord.json
+      - name: Translate public_flags
+        run: |
+          node <<'JS'
+          const fs = require('fs');
+          const flagsMap = {
+            1: "Discordスタッフ",
+            2: "パートナー",
+            4: "HypeSquad",
+            8: "バグハンター（レベル1）",
+            64: "HypeSquad Bravery（赤）",
+            128: "HypeSquad Brilliance（青）",
+            256: "HypeSquad Balance（緑）",
+            512: "早期サポーター",
+            16384: "バグハンター（レベル2）",
+            131072: "認証済みBot開発者",
+            4194304: "アクティブデベロッパー",
+            33554432: "クエスト参加者",
+            41943040: "オーブ保持者"
+          };
+          const data = JSON.parse(fs.readFileSync('discord_min.json'));
+          const pf = data.public_flags_raw || 0;
+          data.public_flags = Object.entries(flagsMap).filter(([k]) => (pf & k) != 0).map(([_,v]) => v);
+          fs.writeFileSync('discord.json', JSON.stringify(data, null, 2));
+          JS
 
       - name: Commit JSON
         run: |
