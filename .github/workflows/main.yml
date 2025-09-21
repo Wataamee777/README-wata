@@ -33,4 +33,4 @@ jobs:
           git config user.email wataamee777@gmail.com
           git add discord.json
           git commit -m "update discord profile" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/Wataamee777/README-wata.git HEAD:main
+          git push https://x-access-token:$GITHUB_TOKEN@github.com/Wataamee777/README-wata.git HEAD:main
