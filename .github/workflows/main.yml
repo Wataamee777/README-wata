@@ -1,8 +1,7 @@
-name: Update Discord Profile
-
+name: update discord
 permissions:
   contents: write
-  
+
 on:
   schedule:
     - cron: "*/5 * * * *" # 5分ごと
@@ -20,14 +19,68 @@ jobs:
           USER_ID: "1099098129338466385"
           GUILD_ID: "1391264661554335845"
         run: |
-          curl -H "Authorization: Bot $TOKEN" \
+          base="https://cdn.discordapp.com"
+
+          # Discord API から取得
+          curl -s -H "Authorization: Bot $TOKEN" \
             https://discord.com/api/v10/users/$USER_ID > profile.json
 
-          curl -H "Authorization: Bot $TOKEN" \
+          curl -s -H "Authorization: Bot $TOKEN" \
             https://discord.com/api/v10/guilds/$GUILD_ID/members/$USER_ID > member.json
 
-          jq -s '.[0] + {status: .[1].presence.status}' profile.json member.json > discord.json
-          
+          curl -s -H "Authorization: Bot $TOKEN" \
+            https://discord.com/api/v10/guilds/$GUILD_ID > guild.json
+
+          # フラグ日本語対応
+          cat > flags.json <<'EOF'
+          {
+            "1": "Discordスタッフ",
+            "2": "パートナー",
+            "4": "HypeSquad",
+            "8": "バグハンター（レベル1）",
+            "64": "HypeSquad Bravery（赤）",
+            "128": "HypeSquad Brilliance（青）",
+            "256": "HypeSquad Balance（緑）",
+            "512": "早期サポーター",
+            "16384": "バグハンター（レベル2）",
+            "131072": "認証済みBot開発者",
+            "4194304": "アクティブデベロッパー",
+            "33554432": "クエスト参加者",
+            "41943040": "オーブ保持者"
+          }
+          EOF
+
+          # jqで整形
+          jq --arg base "$base" -s '
+            def flags_to_names(flags):
+              (input | to_entries | map(select((.key|tonumber) and (flags & ( .key|tonumber ) != 0)) | .value));
+
+            def status_name(s):
+              if s == "online" then "🟢 オンライン"
+              elif s == "idle" then "🌙 退席中"
+              elif s == "dnd" then "⛔ 取り込み中"
+              else "🔘 オフライン" end;
+
+            def to_hex(n):
+              if n == null then null else "#"+(n | tonumber | tostring | tonumber | toString(16)) end;
+
+            .[0]
+            + { 
+                avatar: (if .[0].avatar then ($base + "/avatars/" + .[0].id + "/" + .[0].avatar + ".png") else null end),
+                banner: (if .[0].banner then ($base + "/banners/" + .[0].id + "/" + .[0].banner + ".png") else null end),
+                banner_color: .[0].banner_color,
+                accent_color: (.accent_color | to_hex),
+                status: (.[1].presence.status | status_name),
+                clan: {
+                  id: .[2].id,
+                  name: .[2].name,
+                  icon: (if .[2].icon then ($base + "/icons/" + .[2].id + "/" + .[2].icon + ".png") else null end)
+                },
+                public_flags: (.[0].public_flags | flags_to_names)
+              }
+            | del(.discriminator, .discussions, .collectibles)
+          ' profile.json member.json guild.json flags.json > discord.json
+
       - name: Commit JSON
         run: |
           git config user.name Wataamee777
