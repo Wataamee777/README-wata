@@ -27,7 +27,7 @@ jobs:
           
       - name: Commit JSON
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config user.name Wataamee777
           git config user.email wataamee777@gmail.com
