@@ -50,7 +50,7 @@ jobs:
           }' > flags.json
 
           # 外部 jq スクリプトを呼び出して JSON 整形
-          jq -s --rawfile flags flags.json -f .github/workflows/process_discord.jq profile.json member.json guild.json > discord.json
+          jq -s --rawfile flags flags.json --arg base "$base" -f .github/workflows/process_discord.jq profile.json member.json guild.json > discord.json
 
       - name: Commit JSON
         run: |
