@@ -1,4 +1,5 @@
-name: update discord
+name: Update Discord Profile
+
 permissions:
   contents: write
 
@@ -21,7 +22,7 @@ jobs:
         run: |
           base="https://cdn.discordapp.com"
 
-          # Discord API から取得
+          # Discord APIからデータ取得
           curl -s -H "Authorization: Bot $TOKEN" \
             https://discord.com/api/v10/users/$USER_ID > profile.json
 
@@ -31,9 +32,8 @@ jobs:
           curl -s -H "Authorization: Bot $TOKEN" \
             https://discord.com/api/v10/guilds/$GUILD_ID > guild.json
 
-          # フラグ日本語対応
-          cat > flags.json <<'EOF'
-          {
+          # バッジ日本語対応
+          echo '{
             "1": "Discordスタッフ",
             "2": "パートナー",
             "4": "HypeSquad",
@@ -47,22 +47,21 @@ jobs:
             "4194304": "アクティブデベロッパー",
             "33554432": "クエスト参加者",
             "41943040": "オーブ保持者"
-          }
-          EOF
+          }' > flags.json
 
-          # jqで整形
-          jq --arg base "$base" -s '
-            def flags_to_names(flags):
-              (input | to_entries | map(select((.key|tonumber) and (flags & ( .key|tonumber ) != 0)) | .value));
+          # JSON整形
+          jq --arg base "$base" -s --argfile flags flags.json '
+            def flags_to_names(flags_json):
+              [flags_json | to_entries[] | select((.key|tonumber) and ((.[0].public_flags & (.key|tonumber)) !=0)) | .value];
 
             def status_name(s):
-              if s == "online" then "🟢 オンライン"
-              elif s == "idle" then "🌙 退席中"
-              elif s == "dnd" then "⛔ 取り込み中"
+              if s=="online" then "🟢 オンライン"
+              elif s=="idle" then "🌙 退席中"
+              elif s=="dnd" then "⛔ 取り込み中"
               else "🔘 オフライン" end;
 
             def to_hex(n):
-              if n == null then null else "#"+(n | tonumber | tostring | tonumber | toString(16)) end;
+              if n==null then null else "#"+(n | tonumber | tostring | tonumber | toString(16)) end;
 
             .[0]
             + { 
@@ -76,10 +75,10 @@ jobs:
                   name: .[2].name,
                   icon: (if .[2].icon then ($base + "/icons/" + .[2].id + "/" + .[2].icon + ".png") else null end)
                 },
-                public_flags: (.[0].public_flags | flags_to_names)
+                public_flags: (flags_to_names($flags))
               }
             | del(.discriminator, .discussions, .collectibles)
-          ' profile.json member.json guild.json flags.json > discord.json
+          ' profile.json member.json guild.json > discord.json
 
       - name: Commit JSON
         run: |
