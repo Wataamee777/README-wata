@@ -1,7 +1,8 @@
 def flags_to_names(flags_raw):
   [ (flags_raw[0] | fromjson) as $f
+    | .[0].public_flags as $pf
     | $f | to_entries[]
-    | select((.key|tonumber) and ((.[0].public_flags & (.key|tonumber)) !=0))
+    | select(($pf & (.key|tonumber)) != 0)
     | .value ];
 
 def status_name(s):
