@@ -50,7 +50,7 @@ jobs:
           }' > flags.json
 
           # JSON整形（古いjq対応）
-          jq -s --rawfile flags flags.json '
+          jq -s --rawfile flags flags.json 
             def flags_to_names(flags_raw):
               [ (flags_raw[0] | fromjson) as $f
                 | $f | to_entries[]
