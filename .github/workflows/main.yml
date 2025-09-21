@@ -2,7 +2,7 @@ name: Update Discord Profile
 
 on:
   schedule:
-    - cron: "*/5 * * * *" # 10分ごと
+    - cron: "*/5 * * * *" # 5分ごと
   workflow_dispatch:
 
 jobs:
@@ -24,11 +24,13 @@ jobs:
             https://discord.com/api/v10/guilds/$GUILD_ID/members/$USER_ID > member.json
 
           jq -s '.[0] + {status: .[1].presence.status}' profile.json member.json > discord.json
-
+          
       - name: Commit JSON
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name Wataamee777
           git config user.email wataamee777@gmail.com
           git add discord.json
-          git commit -m "update discord profile"
-          git push
+          git commit -m "update discord profile" || echo "No changes to commit"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/Wataamee777/README-wata.git HEAD:main
