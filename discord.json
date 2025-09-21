@@ -1,0 +1,28 @@
+{
+  "id": "1099098129338466385",
+  "username": "wataamee_777",
+  "avatar": "77e7e6a9bf6d886ebb971fcdc5ec92b6",
+  "discriminator": "0",
+  "public_flags": 4194432,
+  "flags": 4194432,
+  "banner": null,
+  "accent_color": 3183846,
+  "global_name": "わたあめえ",
+  "avatar_decoration_data": null,
+  "collectibles": null,
+  "display_name_styles": null,
+  "banner_color": "#3094e6",
+  "clan": {
+    "identity_guild_id": "1402196560695263242",
+    "identity_enabled": true,
+    "tag": ".com",
+    "badge": "1ed7199bb77243d56d6b1969ec99e383"
+  },
+  "primary_guild": {
+    "identity_guild_id": "1402196560695263242",
+    "identity_enabled": true,
+    "tag": ".com",
+    "badge": "1ed7199bb77243d56d6b1969ec99e383"
+  },
+  "status": null
+}
