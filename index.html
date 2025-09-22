@@ -61,17 +61,22 @@
   </header>
 
   <main>
-    <section id="discord-profile">
-      <h2>🧩 Discord プロフィール</h2>
-     <div id="discord-container">
-      <img id="discord-avatar" src="" alt="読み込み中..." onselectstart="return false;" onmousedown="return false;" oncontextmenu="return false;"></img>
-      <p id="discord-name">読み込み中...</p>
-      <p id="discord-status"></p>
-      <p id="discord-custom"></p>
-     <div id="discord-badges"></div>
-      <p id="discord-createdat"></p>
-     </div>
-    </section>
+    <!-- Discordプロフィールカード -->
+<section id="discord-profile">
+  <h2>Discord Profile</h2>
+  <div class="card" id="profile-card">
+    <div class="banner" id="banner"></div>
+    <img src="" alt="avatar" class="avatar" id="avatar">
+    <div class="content">
+      <div class="name" id="username"></div>
+      <div class="global-name" id="globalname"></div>
+      <div class="status" id="status"></div>
+      <div class="clan" id="clan"></div>
+      <div class="badges" id="badges"></div>
+    </div>
+  </div>
+</section>
+
 
     <section id="sns" class="fade-in-scroll">
       <h2>📱 SNS & ゲームID</h2>
