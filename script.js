@@ -13,35 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   type();
 
-fetch("discord.json")
-  .then(res => res.json())
-  .then(data => {
-    // バナー背景
-    const banner = document.querySelector(".banner");
-    if (data.banner) {
-      banner.style.backgroundImage = `url(${data.banner})`;
-      banner.style.backgroundSize = "cover";
-    } else if (data.banner_color) {
-      banner.style.background = data.banner_color;
-    }
-
-    // アイコン
-    document.getElementById("avatar").src = data.avatar;
-
-    // 名前
-    document.getElementById("global_name").textContent = data.global_name;
-    document.getElementById("username").textContent = "@" + data.username;
-
-    // ステータス
-    document.getElementById("status").textContent = data.status;
-
-    // サーバータグ
-    if (data.primary_guild && data.primary_guild.tag) {
-      document.getElementById("tag").textContent = data.primary_guild.tag;
-    }
-  })
-  .catch(err => console.error("プロフィール読み込みエラー:", err));
-
 const darkModeToggle = document.getElementById('darkModeToggle');
 
 (function initTheme() {
@@ -248,4 +219,33 @@ if ('serviceWorker' in navigator) {
     .catch(err => console.warn('❌ SW登録失敗', err));
 }
   
+  fetch("discord.json")
+  .then(res => res.json())
+  .then(data => {
+    // バナー背景
+    const banner = document.querySelector(".banner");
+    if (data.banner) {
+      banner.style.backgroundImage = `url(${data.banner})`;
+      banner.style.backgroundSize = "cover";
+    } else if (data.banner_color) {
+      banner.style.background = data.banner_color;
+    }
+
+    // アイコン
+    document.getElementById("avatar").src = data.avatar;
+
+    // 名前
+    document.getElementById("global_name").textContent = data.global_name;
+    document.getElementById("username").textContent = "@" + data.username;
+
+    // ステータス
+    document.getElementById("status").textContent = data.status;
+
+    // サーバータグ
+    if (data.primary_guild && data.primary_guild.tag) {
+      document.getElementById("tag").textContent = data.primary_guild.tag;
+    }
+  })
+  .catch(err => console.error("プロフィール読み込みエラー:", err));
+
 });
