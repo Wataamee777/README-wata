@@ -221,3 +221,36 @@ button:hover {
     border: none;
     background-color: #ff69da22;
 }
+
+
+#discord-profile {
+  background: #2f3136;
+  border-radius: 8px;
+  overflow: hidden;
+  color: #fff;
+  font-family: sans-serif;
+  width: 350px;
+}
+
+.banner {
+  height: 100px;
+  background: #5865f2; /* fallback */
+}
+
+.profile-main {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  gap: 15px;
+}
+
+#avatar {
+  border-radius: 50%;
+  border: 3px solid #2f3136;
+  margin-top: -40px; /* overlap on banner */
+}
+
+.profile-info span {
+  display: block;
+  margin: 3px 0;
+}
