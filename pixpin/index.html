@@ -17,15 +17,17 @@
 <meta name="twitter:title" content="PixPin - テキスト短縮サービス">
 <meta name="twitter:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
 <meta name="twitter:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
+  
 <style>
 body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; background:#eef; margin:0; padding:20px; }
 #mainPage,#displayPage { width:100%; max-width:480px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 6px 16px rgba(0,0,0,0.15); margin-top:16px; }
-textarea,input,select,button { width:100%; margin:8px 0; padding:10px; border-radius:8px; border:1px solid #ccc; }
+textarea,input,select,button { width:100%; margin:6px 0; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
 button { cursor:pointer; background:#4facfe; color:#fff; border:none; }
-#displayArea img { max-width:90%; border-radius:8px; }
-.shareUrlContainer { display:flex; gap:6px; margin-top:8px; }
-.shareUrlContainer input { flex:1; padding:6px; border:1px solid #ccc; border-radius:6px; }
-#fileWarning { color:red; font-size:0.9rem; margin-bottom:4px; display:none; }
+#displayArea img { max-width:90%; border-radius:8px; margin-top:8px; }
+.shareUrlContainer { display:flex; gap:4px; margin-top:6px; align-items:center; }
+.shareUrlContainer input { flex:1; padding:6px; border:1px solid #ccc; border-radius:6px; font-size:14px; }
+#copyBtn { padding:6px 10px; font-size:13px; background:#00bcd4; }
+#fileWarning { color:red; font-size:0.85rem; margin-bottom:4px; display:none; }
 </style>
 </head>
 <body>
@@ -39,8 +41,8 @@ button { cursor:pointer; background:#4facfe; color:#fff; border:none; }
 <input type="file" id="fileInput" style="display:none;">
 </div>
 <select id="typeSelect">
-<option value="text">テキスト</option>
-<option value="image">画像</option>
+<option value="text">Text</option>
+<option value="image">Image</option>
 <option value="url">URL</option>
 </select>
 <button id="shareBtn">共有</button>
@@ -95,8 +97,9 @@ document.getElementById('shareBtn').onclick=async()=>{
     value=await fileToBase64(file); 
   }
   const short=type.charAt(0)+encodeBase62(value);
-  const shareLink=`?share=${short}`;
-  document.getElementById('shareUrl').innerHTML=`<input type="text" value="${shareLink}" readonly><button id="copyBtn">コピー</button>`;
+  const shareLink=`https://wataamee777.f5.si/pixpin/?share=${short}`;
+  document.getElementById('shareUrl').innerHTML=
+    `<input type="text" value="${shareLink}" readonly><button id="copyBtn">コピー</button>`;
   document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shareLink);
 }
 
