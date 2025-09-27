@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PixPin - テキスト短縮サービス</title>
+<style>
+body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; margin:0; padding:20px; }
+#mainPage, #displayPage { width:100%; max-width:500px; }
+textarea, input, select { width:100%; margin:6px 0; padding:6px; box-sizing:border-box; }
+button { margin-top:10px; padding:8px 16px; }
+#displayArea { margin-top:40px; text-align:center; word-break:break-all; }
+img { max-width:90vw; }
+</style>
+</head>
+<body>
+
+<!-- メインページ -->
+<div id="mainPage">
+  <textarea id="valueInput" placeholder="文字列やURLを入力"></textarea>
+  <input type="file" id="fileInput">
+  <select id="typeSelect">
+    <option value="text">Text</option>
+    <option value="image">Image</option>
+    <option value="url">URL</option>
+  </select>
+  <label><input type="checkbox" id="autoRedirect">自動リダイレクト(URLのみ)</label>
+  <input type="text" id="pinInput" placeholder="PIN(任意)">
+  <button id="shareBtn">共有</button>
+</div>
+
+<!-- 表示ページ -->
+<div id="displayPage" style="display:none;">
+  <div id="displayArea"></div>
+  <button id="actionBtn"></button>
+</div>
+
+<script>
+// --- Base62 ---
+const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+function encodeBase62(num){
+  let result='';
+  while(num>0){ result=chars[num%62]+result; num=Math.floor(num/62);}
+  return result.padStart(8,'0');
+}
+
+// --- 簡易ハッシュ ---
+function hash(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h*31+str.charCodeAt(i))>>>0; } return h; }
+
+// --- クライアント内データストレージ ---
+const storage = {};
+
+// --- ファイルをBase64に ---
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>res(reader.result);
+    reader.onerror = ()=>rej(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- 共有ボタン ---
+document.getElementById('shareBtn').onclick = async ()=>{
+  let value = document.getElementById('valueInput').value;
+  const type = document.getElementById('typeSelect').value;
+  const autoRedirect = document.getElementById('autoRedirect').checked;
+  const pinInput = document.getElementById('pinInput').value;
+  const pin = pinInput ? hash(pinInput).toString() : null;
+
+  // 画像の場合はファイル選択
+  if(type==='image'){
+    const file = document.getElementById('fileInput').files[0];
+    if(!file) return alert("画像を選んでください");
+    value = await fileToBase64(file);
+  }
+
+  const obj = { value, type, setting: { autoRedirect, pin } };
+  const id = encodeBase62(Date.now());
+  storage[id] = obj;
+
+  alert(`短縮リンク: ?share=${id}`);
+}
+
+// --- 表示ページ ---
+const params = new URLSearchParams(location.search);
+if(params.has('share')){
+  const obj = storage[params.get('share')];
+  if(obj){
+    document.getElementById('mainPage').style.display='none';
+    const displayArea = document.getElementById('displayArea');
+    const actionBtn = document.getElementById('actionBtn');
+
+    // PIN確認
+    if(obj.setting.pin){
+      const pinVal = prompt("PINを入力してください:");
+      if(hash(pinVal).toString()!==obj.setting.pin){
+        displayArea.textContent="PINが違います";
+        actionBtn.style.display="none";
+      }
+    }
+
+    // 表示とボタン切替
+    if(obj.type==='text'){
+      displayArea.textContent = obj.value;
+      actionBtn.textContent='コピー';
+      actionBtn.onclick = ()=>navigator.clipboard.writeText(obj.value);
+    } else if(obj.type==='image'){
+      const img = document.createElement('img');
+      img.src = obj.value;
+      displayArea.appendChild(img);
+      actionBtn.textContent='DL';
+      actionBtn.onclick = ()=>{
+        const a = document.createElement('a');
+        a.href = obj.value;
+        a.download = '';
+        a.click();
+      }
+    } else if(obj.type==='url'){
+      displayArea.textContent = obj.value;
+      if(obj.setting.autoRedirect) location.href = obj.value;
+      else{
+        actionBtn.textContent='移動';
+        actionBtn.onclick = ()=>location.href=obj.value;
+      }
+    }
+
+    document.getElementById('displayPage').style.display='block';
+  }
+}
+</script>
+
+</body>
+</html>
