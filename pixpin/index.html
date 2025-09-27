@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PixPin - テキスト短縮サービス</title>
+<title>PixPin - 簡易短縮サービス</title>
+
 <link rel="icon" href="https://wataamee777.f5.si/assets/favicon.ico" />
 
 <!-- OGP -->
@@ -16,244 +17,112 @@
 <meta name="twitter:title" content="PixPin - テキスト短縮サービス">
 <meta name="twitter:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
 <meta name="twitter:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
-
 <style>
-body {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  min-height:100vh;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f0f4ff, #e0f7ff);
-  margin:0;
-  padding:20px;
-}
-h2 { margin-bottom:16px; }
-#mainPage, #displayPage {
-  width:100%;
-  max-width:480px;
-  background:#fff;
-  border-radius:16px;
-  padding:24px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  box-sizing:border-box;
-  transition: transform 0.2s ease;
-}
-#mainPage:hover, #displayPage:hover { transform: translateY(-4px); }
-textarea, input, select {
-  width:100%;
-  margin:10px 0;
-  padding:12px;
-  border:1px solid #ccc;
-  border-radius:8px;
-  font-size:1rem;
-  transition: border 0.2s, box-shadow 0.2s;
-}
-textarea:focus, input:focus, select:focus {
-  border-color:#4facfe;
-  box-shadow:0 0 8px rgba(79,172,254,0.5);
-  outline:none;
-}
-button {
-  margin-top:14px;
-  padding:12px 24px;
-  font-size:1rem;
-  font-weight:600;
-  border:none;
-  border-radius:12px;
-  cursor:pointer;
-  background: linear-gradient(90deg, #4facfe, #00f2fe);
-  color:#fff;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-button:hover {
-  transform: translateY(-2px);
-  box-shadow:0 6px 16px rgba(0,0,0,0.25);
-}
-#displayArea {
-  margin-top:32px;
-  text-align:center;
-  word-break:break-all;
-  padding:16px;
-  background:#f5f5f5;
-  border-radius:12px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-img {
-  max-width:90vw;
-  border-radius:12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  margin-top:12px;
-}
-label { display:flex; align-items:center; gap:6px; font-size:0.9rem; margin-top:6px; }
-.shareUrlContainer { margin-top:12px; display:flex; gap:6px; flex-wrap:wrap; }
-.shareUrlContainer input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
+body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; background:#eef; margin:0; padding:20px; }
+#mainPage,#displayPage { width:100%; max-width:480px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 6px 16px rgba(0,0,0,0.15); margin-top:16px; }
+textarea,input,select,button { width:100%; margin:8px 0; padding:10px; border-radius:8px; border:1px solid #ccc; }
+button { cursor:pointer; background:#4facfe; color:#fff; border:none; }
+#displayArea img { max-width:90%; border-radius:8px; }
+.shareUrlContainer { display:flex; gap:6px; margin-top:8px; }
+.shareUrlContainer input { flex:1; padding:6px; border:1px solid #ccc; border-radius:6px; }
 #fileWarning { color:red; font-size:0.9rem; margin-bottom:4px; display:none; }
 </style>
 </head>
 <body>
 
-<h2>PixPin - テキスト短縮サービス</h2>
+<h2>PixPin - 簡易短縮サービス</h2>
 
 <div id="mainPage">
-  <textarea id="valueInput" placeholder="文字列やURLを入力"></textarea>
-
-  <div id="fileContainer">
-    <div id="fileWarning">imageに変更してください</div>
-    <input type="file" id="fileInput">
-  </div>
-
-  <select id="typeSelect">
-    <option value="text">Text</option>
-    <option value="image">Image</option>
-    <option value="url">URL</option>
-  </select>
-
-  <label><input type="checkbox" id="autoRedirect">自動リダイレクト(URLのみ)</label>
-  <input type="text" id="pinInput" placeholder="PIN(任意)">
-  <button id="shareBtn">共有</button>
-
-  <div id="shareUrl" class="shareUrlContainer"></div>
+<textarea id="valueInput" placeholder="文字列やURLを入力"></textarea>
+<div id="fileContainer">
+<div id="fileWarning">typeをImageに変更してください</div>
+<input type="file" id="fileInput" style="display:none;">
+</div>
+<select id="typeSelect">
+<option value="text">テキスト</option>
+<option value="image">画像</option>
+<option value="url">URL</option>
+</select>
+<button id="shareBtn">共有</button>
+<div id="shareUrl" class="shareUrlContainer"></div>
 </div>
 
 <div id="displayPage" style="display:none;">
-  <div id="displayArea"></div>
-  <button id="actionBtn"></button>
+<div id="displayArea"></div>
+<button id="actionBtn"></button>
 </div>
 
 <script>
-// --- Base62 ---
-const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-function toBase62(num){
-  let s='';
-  while(num>0){ s=chars[num%62]+s; num=Math.floor(num/62);}
-  return s||'0';
-}
-function fromBase62(str){
-  let num=0;
-  for(let i=0;i<str.length;i++){
-    num=num*62+chars.indexOf(str[i]);
-  }
-  return num;
-}
-
-// --- UTF-8 文字列 <-> バイト配列 ---
-function strToBytes(str){ return new TextEncoder().encode(str); }
-function bytesToStr(bytes){ return new TextDecoder().decode(bytes); }
-
-// --- JSON <-> Base62 ---
-function jsonToBase62(obj){
-  const bytes = strToBytes(JSON.stringify(obj));
-  let hex = '';
-  bytes.forEach(b=>{ hex += b.toString(16).padStart(2,'0'); });
-  let num = BigInt('0x'+hex);
+// 簡易 Base62
+const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+function encodeBase62(str){
+  const bytes=new TextEncoder().encode(str);
+  let hex=''; bytes.forEach(b=>hex+=b.toString(16).padStart(2,'0'));
+  let num=BigInt('0x'+hex);
   let s='';
   while(num>0n){ s=chars[Number(num%62n)]+s; num/=62n; }
   return s||'0';
 }
-function base62ToJson(s){
+function decodeBase62(s){
   let num=0n;
-  for(let c of s) num=num*62n+BigInt(chars.indexOf(c));
-  let hex = num.toString(16);
+  for(const c of s) num=num*62n+BigInt(chars.indexOf(c));
+  let hex=num.toString(16);
   if(hex.length%2) hex='0'+hex;
   let bytes=[];
   for(let i=0;i<hex.length;i+=2) bytes.push(parseInt(hex.substr(i,2),16));
-  return JSON.parse(bytesToStr(new Uint8Array(bytes)));
+  return new TextDecoder().decode(new Uint8Array(bytes));
 }
 
-// --- ファイルをBase64に ---
-function fileToBase64(file){
-  return new Promise((res,rej)=>{
-    const reader=new FileReader();
-    reader.onload=()=>res(reader.result);
-    reader.onerror=()=>rej(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
+// ファイル -> Base64
+function fileToBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(file); }); }
 
-// --- DOM ---
+// DOM操作
 const typeSelect=document.getElementById('typeSelect');
 const fileInput=document.getElementById('fileInput');
 const fileWarning=document.getElementById('fileWarning');
-const autoRedirectCheck=document.getElementById('autoRedirect');
-const shareBtn=document.getElementById('shareBtn');
 
-fileInput.style.display='none'; fileInput.disabled=true;
-fileWarning.style.display='none';
-autoRedirectCheck.disabled=true;
-
-typeSelect.addEventListener('change', ()=>{
-  if(typeSelect.value==='image'){
-    fileInput.style.display='block'; fileInput.disabled=false;
-    fileWarning.style.display='none';
-  } else {
-    fileInput.style.display='block'; fileInput.disabled=true; fileInput.value='';
-    fileWarning.style.display = typeSelect.value==='text'?'block':'none';
-  }
-  autoRedirectCheck.disabled = typeSelect.value==='url'?false:true;
-  if(autoRedirectCheck.disabled) autoRedirectCheck.checked=false;
+typeSelect.addEventListener('change',()=>{
+  if(typeSelect.value==='image'){ fileInput.style.display='block'; fileInput.disabled=false; fileWarning.style.display='none'; }
+  else{ fileInput.style.display='block'; fileInput.disabled=true; fileInput.value=''; fileWarning.style.display=typeSelect.value==='text'?'block':'none'; }
 });
 
-// --- 共有ボタン ---
-shareBtn.onclick=async()=>{
+document.getElementById('shareBtn').onclick=async()=>{
   let value=document.getElementById('valueInput').value;
   const type=typeSelect.value;
-  const autoRedirect=autoRedirectCheck.checked;
-  const pinInput=document.getElementById('pinInput').value;
-  const pin = pinInput?Array.from(pinInput).reduce((h,c)=>((h*31+c.charCodeAt(0))>>>0),0).toString():null;
-
-  if(type==='image'){
-    const file=fileInput.files[0];
-    if(!file) return;
-    value=await fileToBase64(file);
+  if(type==='image'){ 
+    const file=fileInput.files[0]; 
+    if(!file){ alert("画像を選んでください"); return; } 
+    value=await fileToBase64(file); 
   }
-
-  const obj={value,type,setting:{autoRedirect,pin}};
-  const base62=jsonToBase62(obj);
-  const shareLink=`https://wataamee777.f5.si/pixpin/?share=${base62}`;
-
-  const shareDiv=document.getElementById('shareUrl');
-  shareDiv.innerHTML=`<input type="text" value="${shareLink}" readonly><button id="copyBtn">コピー</button>`;
-  document.getElementById('copyBtn').onclick=()=>{navigator.clipboard.writeText(shareLink); alert('コピーしました！');};
+  const short=type.charAt(0)+encodeBase62(value);
+  const shareLink=`?share=${short}`;
+  document.getElementById('shareUrl').innerHTML=`<input type="text" value="${shareLink}" readonly><button id="copyBtn">コピー</button>`;
+  document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shareLink);
 }
 
-// --- 表示ページ ---
+// 表示ページ
 const params=new URLSearchParams(location.search);
 if(params.has('share')){
-  let obj;
-  try{ obj=base62ToJson(params.get('share')); }catch(e){ console.error(e); }
-  if(obj){
-    document.getElementById('mainPage').style.display='none';
-    const displayArea=document.getElementById('displayArea');
-    const actionBtn=document.getElementById('actionBtn');
+  const s=params.get('share');
+  const typeChar=s.charAt(0);
+  const valueStr=decodeBase62(s.slice(1));
+  document.getElementById('mainPage').style.display='none';
+  const displayArea=document.getElementById('displayArea');
+  const actionBtn=document.getElementById('actionBtn');
 
-    if(obj.setting.pin){
-      const pinVal=prompt("PINを入力してください:");
-      const hashVal=Array.from(pinVal).reduce((h,c)=>((h*31+c.charCodeAt(0))>>>0),0).toString();
-      if(hashVal!==obj.setting.pin){
-        displayArea.textContent="PINが違います"; actionBtn.style.display='none';
-      }
-    }
-
-    if(obj.type==='text'){
-      displayArea.textContent=obj.value;
-      actionBtn.textContent='コピー';
-      actionBtn.onclick=()=>navigator.clipboard.writeText(obj.value);
-    } else if(obj.type==='image'){
-      const img=document.createElement('img'); img.src=obj.value;
-      displayArea.appendChild(img);
-      actionBtn.textContent='DL';
-      actionBtn.onclick=()=>{ const a=document.createElement('a'); a.href=obj.value; a.download=''; a.click(); };
-    } else if(obj.type==='url'){
-      displayArea.textContent=obj.value;
-      if(obj.setting.autoRedirect) location.href=obj.value;
-      else{ actionBtn.textContent='移動'; actionBtn.onclick=()=>location.href=obj.value; }
-    }
-    document.getElementById('displayPage').style.display='block';
+  if(typeChar==='t' || typeChar==='u'){ 
+    displayArea.textContent=valueStr; 
+    actionBtn.textContent='コピー'; 
+    actionBtn.onclick=()=>navigator.clipboard.writeText(valueStr);
+  } else if(typeChar==='i'){ 
+    const img=document.createElement('img'); 
+    img.src=valueStr; 
+    displayArea.appendChild(img); 
+    actionBtn.textContent='DL'; 
+    actionBtn.onclick=()=>{ const a=document.createElement('a'); a.href=valueStr; a.download=''; a.click(); };
   }
+  document.getElementById('displayPage').style.display='block';
 }
 </script>
-
 </body>
 </html>
