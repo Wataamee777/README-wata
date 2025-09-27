@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PixPin - 簡易短縮サービス</title>
-
 <link rel="icon" href="https://wataamee777.f5.si/assets/favicon.ico" />
 
 <!-- OGP -->
@@ -17,11 +16,11 @@
 <meta name="twitter:title" content="PixPin - テキスト短縮サービス">
 <meta name="twitter:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
 <meta name="twitter:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
-  
+
 <style>
 body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; background:#eef; margin:0; padding:20px; }
 #mainPage,#displayPage { width:100%; max-width:480px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 6px 16px rgba(0,0,0,0.15); margin-top:16px; }
-textarea,input,select,button { width:100%; margin:6px 0; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:14px; }
+textarea,input,select,button { width:100%; margin:6px 0; padding:8px; border-radius:6px; border:1px solid #ccc; font-size:14px; box-sizing:border-box; }
 button { cursor:pointer; background:#4facfe; color:#fff; border:none; }
 #displayArea img { max-width:90%; border-radius:8px; margin-top:8px; }
 .shareUrlContainer { display:flex; gap:4px; margin-top:6px; align-items:center; }
@@ -113,15 +112,19 @@ if(params.has('share')){
   const displayArea=document.getElementById('displayArea');
   const actionBtn=document.getElementById('actionBtn');
 
-  if(typeChar==='t' || typeChar==='u'){ 
+  if(typeChar==='t'){ 
     displayArea.textContent=valueStr; 
     actionBtn.textContent='コピー'; 
     actionBtn.onclick=()=>navigator.clipboard.writeText(valueStr);
+  } else if(typeChar==='u'){ 
+    displayArea.textContent=valueStr; 
+    actionBtn.textContent='移動'; 
+    actionBtn.onclick=()=>window.location.href=valueStr;
   } else if(typeChar==='i'){ 
     const img=document.createElement('img'); 
     img.src=valueStr; 
     displayArea.appendChild(img); 
-    actionBtn.textContent='DL'; 
+    actionBtn.textContent='ダウンロード'; 
     actionBtn.onclick=()=>{ const a=document.createElement('a'); a.href=valueStr; a.download=''; a.click(); };
   }
   document.getElementById('displayPage').style.display='block';
