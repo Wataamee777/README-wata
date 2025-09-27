@@ -4,10 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PixPin - テキスト短縮サービス</title>
-<link rel="icon" href="https://wataamee777.f5.si/favicon.ico" />
+<link rel="icon" href="https://wataamee777.f5.si/assets/favicon.ico" />
+
+<!-- OGP -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="PixPin - テキスト短縮サービス">
+<meta property="og:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
+<meta property="og:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
+<meta property="og:url" content="https://wataamee777.f5.si/pixpin/">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PixPin - テキスト短縮サービス">
+<meta name="twitter:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
+<meta name="twitter:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
+
 <style>
-body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; margin:0; padding:20px; }
-/* 全体 */
 body {
   display:flex;
   flex-direction:column;
@@ -20,7 +32,8 @@ body {
   padding:20px;
 }
 
-/* カード風 */
+h2 { margin-bottom:16px; }
+
 #mainPage, #displayPage {
   width:100%;
   max-width:480px;
@@ -35,7 +48,6 @@ body {
   transform: translateY(-4px);
 }
 
-/* 入力欄 */
 textarea, input, select {
   width:100%;
   margin:10px 0;
@@ -51,7 +63,6 @@ textarea:focus, input:focus, select:focus {
   outline:none;
 }
 
-/* ボタン */
 button {
   margin-top:14px;
   padding:12px 24px;
@@ -69,7 +80,6 @@ button:hover {
   box-shadow:0 6px 16px rgba(0,0,0,0.25);
 }
 
-/* 表示領域 */
 #displayArea {
   margin-top:32px;
   text-align:center;
@@ -80,7 +90,6 @@ button:hover {
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* 画像表示 */
 img {
   max-width:90vw;
   border-radius:12px;
@@ -88,35 +97,39 @@ img {
   margin-top:12px;
 }
 
-/* チェックボックスラベル */
-label {
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:0.9rem;
-  margin-top:6px;
-}
+label { display:flex; align-items:center; gap:6px; font-size:0.9rem; margin-top:6px; }
 
+.shareUrlContainer { margin-top:12px; display:flex; gap:6px; flex-wrap:wrap; }
+.shareUrlContainer input { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
+
+#fileWarning { color:red; font-size:0.9rem; margin-bottom:4px; display:none; }
 </style>
 </head>
 <body>
 
-<!-- メインページ -->
 <h2>PixPin - テキスト短縮サービス</h2>
+
 <div id="mainPage">
   <textarea id="valueInput" placeholder="文字列やURLを入力"></textarea>
-  <input type="file" id="fileInput">
+
+  <div id="fileContainer">
+    <div id="fileWarning">imageに変更してください</div>
+    <input type="file" id="fileInput">
+  </div>
+
   <select id="typeSelect">
     <option value="text">Text</option>
     <option value="image">Image</option>
     <option value="url">URL</option>
   </select>
+
   <label><input type="checkbox" id="autoRedirect">自動リダイレクト(URLのみ)</label>
   <input type="text" id="pinInput" placeholder="PIN(任意)">
   <button id="shareBtn">共有</button>
+
+  <div id="shareUrl" class="shareUrlContainer"></div>
 </div>
 
-<!-- 表示ページ -->
 <div id="displayPage" style="display:none;">
   <div id="displayArea"></div>
   <button id="actionBtn"></button>
@@ -147,6 +160,38 @@ function fileToBase64(file){
   });
 }
 
+// --- ファイル表示制御 & 自動リダイレクト制御 ---
+const typeSelect = document.getElementById('typeSelect');
+const fileInput = document.getElementById('fileInput');
+const fileWarning = document.getElementById('fileWarning');
+const autoRedirectCheck = document.getElementById('autoRedirect');
+
+fileInput.style.display = 'none';
+fileWarning.style.display = 'none';
+fileInput.disabled = true;
+autoRedirectCheck.disabled = true;
+
+typeSelect.addEventListener('change', ()=>{
+  if(typeSelect.value === 'image'){
+    fileInput.style.display = 'block';
+    fileInput.disabled = false;
+    fileWarning.style.display = 'none';
+  } else {
+    fileInput.style.display = 'block';
+    fileInput.disabled = true;
+    fileInput.value = '';
+    fileWarning.style.display = typeSelect.value === 'text' ? 'block' : 'none';
+  }
+
+  // 自動リダイレクトONはURLのみ
+  if(typeSelect.value === 'url'){
+    autoRedirectCheck.disabled = false;
+  } else {
+    autoRedirectCheck.checked = false;
+    autoRedirectCheck.disabled = true;
+  }
+});
+
 // --- 共有ボタン ---
 document.getElementById('shareBtn').onclick = async ()=>{
   let value = document.getElementById('valueInput').value;
@@ -155,10 +200,9 @@ document.getElementById('shareBtn').onclick = async ()=>{
   const pinInput = document.getElementById('pinInput').value;
   const pin = pinInput ? hash(pinInput).toString() : null;
 
-  // 画像の場合はファイル選択
   if(type==='image'){
     const file = document.getElementById('fileInput').files[0];
-    if(!file) return alert("画像を選んでください");
+    if(!file) return; // 赤文字で警告表示済み
     value = await fileToBase64(file);
   }
 
@@ -166,7 +210,16 @@ document.getElementById('shareBtn').onclick = async ()=>{
   const id = encodeBase62(Date.now());
   storage[id] = obj;
 
-  alert(`短縮リンク: ?share=${id}`);
+  const shareLink = `https://wataamee777.f5.si/pixpin/?share=${id}`;
+  const shareDiv = document.getElementById('shareUrl');
+  shareDiv.innerHTML = `
+    <input type="text" value="${shareLink}" readonly>
+    <button id="copyBtn">コピー</button>
+  `;
+  document.getElementById('copyBtn').onclick = ()=>{
+    navigator.clipboard.writeText(shareLink);
+    alert("コピーしました！");
+  };
 }
 
 // --- 表示ページ ---
@@ -178,7 +231,6 @@ if(params.has('share')){
     const displayArea = document.getElementById('displayArea');
     const actionBtn = document.getElementById('actionBtn');
 
-    // PIN確認
     if(obj.setting.pin){
       const pinVal = prompt("PINを入力してください:");
       if(hash(pinVal).toString()!==obj.setting.pin){
@@ -187,7 +239,6 @@ if(params.has('share')){
       }
     }
 
-    // 表示とボタン切替
     if(obj.type==='text'){
       displayArea.textContent = obj.value;
       actionBtn.textContent='コピー';
@@ -200,16 +251,13 @@ if(params.has('share')){
       actionBtn.onclick = ()=>{
         const a = document.createElement('a');
         a.href = obj.value;
-        a.download = '';
+        a.download='';
         a.click();
       }
     } else if(obj.type==='url'){
       displayArea.textContent = obj.value;
       if(obj.setting.autoRedirect) location.href = obj.value;
-      else{
-        actionBtn.textContent='移動';
-        actionBtn.onclick = ()=>location.href=obj.value;
-      }
+      else{ actionBtn.textContent='移動'; actionBtn.onclick = ()=>location.href=obj.value; }
     }
 
     document.getElementById('displayPage').style.display='block';
