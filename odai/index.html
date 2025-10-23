@@ -1,13 +1,113 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Redirecting...</title>
-    <script>
-      location.href = "https://script.google.com/macros/s/AKfycbxaGEt6JaLv34bjx2VnXccAqTYZMhSfCs2eYVkd5spY-tSg6PjBe86BlZ17AiqLgbkzOA/exec";
-    </script>
-  </head>
-  <body>
-    <p>リダイレクト中…</p>
-  </body>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>さくら雑談王国お題botへ追加フォーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    #msg {
+      margin-bottom: 10px;
+      color: green;
+    }
+
+    /* iframeレスポンシブ設定 */
+    #sheetFrame {
+      width: 100%;
+      border: none;
+      height: 500px; /* デフォルト高さ */
+    }
+
+    @media screen and (min-width: 1024px) {
+      #sheetFrame { height: 800px; }
+    }
+
+    @media screen and (min-width: 768px) and (max-width: 1023px) {
+      #sheetFrame { height: 700px; }
+    }
+
+    @media screen and (max-width: 767px) {
+      #sheetFrame { height: 500px; }
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 お題を追加する</h2>
+
+  <input type="text" id="topic" placeholder="例：好きな食べ物は？">
+  <button id="submitBtn">追加！</button>
+  <p id="msg"></p>
+
+  <!-- Google スプレッドシート埋め込み -->
+  <iframe id="sheetFrame"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSMHbfMbzKKDlDp2rBoi8b-dklWs4ytjsechM8kBTfpGq_c43D4_OEzsjCF0NOTm0xHk2qy9nQoQdYX/pubhtml?widget=true&headers=false">
+  </iframe>
+
+  <script>
+    const submitBtn = document.getElementById('submitBtn');
+    const topicInput = document.getElementById('topic');
+    const msg = document.getElementById('msg');
+
+    submitBtn.addEventListener('click', async () => {
+      const topic = topicInput.value.trim();
+      if (!topic) {
+        msg.textContent = "お題を入力してね！";
+        return;
+      }
+
+      // 送信中メッセージ
+      msg.textContent = "送信中…";
+      submitBtn.disabled = true;
+
+      try {
+        // GAS Webアプリの URL に POST
+        const response = await fetch('https://script.google.com/macros/s/YOUR_GAS_ID/exec', {
+          method: 'POST',
+          mode: 'cors', // CORS回避しているならOK
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic })
+        });
+
+        if (response.ok) {
+          msg.textContent = "お題が追加されたよ！";
+          topicInput.value = "";
+        } else {
+          msg.textContent = "送信に失敗しました";
+        }
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "通信エラー";
+      }
+
+      submitBtn.disabled = false;
+    });
+  </script>
+</body>
 </html>
