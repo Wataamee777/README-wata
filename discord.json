@@ -15,11 +15,6 @@
     "name": "わたあめえのサーバー",
     "icon": null
   },
-  "primary_guild": {
-    "identity_guild_id": "1394624413659431042",
-    "identity_enabled": true,
-    "tag": "なお鯖",
-    "badge": "4507c292a7c649b9e6e357ac11c5492c"
-  },
+  "primary_guild": null,
   "status": "🔘オフライン"
 }
