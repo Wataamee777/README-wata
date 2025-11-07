@@ -15,6 +15,11 @@
     "name": "わたあめえのサーバー",
     "icon": null
   },
-  "primary_guild": null,
+  "primary_guild": {
+    "identity_guild_id": "1400830654949753023",
+    "identity_enabled": true,
+    "tag": "夢持ち人",
+    "badge": "b717436be84f334ad5e87930c54caac0"
+  },
   "status": "🔘オフライン"
 }
