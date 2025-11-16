@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>静的HTTPテスター</title>
+</head>
+<body>
+<h2>HTTPテスター (GET / POST / PUT / DELETE 対応)</h2>
+
+<form id="apiForm">
+  <label>送信先URL:<br>
+    <input type="text" name="url" placeholder="https://httpbin.org/anything" size="60">
+  </label><br><br>
+
+  <label>HTTPメソッド:<br>
+    <select name="method">
+      <option value="GET">GET</option>
+      <option value="POST">POST</option>
+      <option value="PUT">PUT</option>
+      <option value="DELETE">DELETE</option>
+      <option value="PATCH">PATCH</option>
+    </select>
+  </label><br><br>
+
+  <label>カスタムヘッダー (1行1ヘッダー, key: value):<br>
+    <textarea name="headers" rows="4" cols="60"></textarea>
+  </label><br><br>
+
+  <label>ボディ (JSON / textなど):<br>
+    <textarea name="body" rows="6" cols="60" placeholder='{"msg":"hello"}'></textarea>
+  </label><br><br>
+
+  <button type="submit">送信</button>
+</form>
+
+<h3>レスポンス</h3>
+<pre id="result" style="white-space: pre-wrap; border:1px solid #ccc; padding:10px;"></pre>
+
+<script>
+document.getElementById("apiForm").onsubmit = async e => {
+  e.preventDefault();
+  const f = e.target;
+  const url = f.url.value;
+  const method = f.method.value.toUpperCase();
+  const bodyText = f.body.value;
+
+  // ヘッダー解析
+  const headers = {};
+  f.headers.value.split("\n").forEach(line => {
+    if(line.includes(":")) {
+      const [k, ...v] = line.split(":");
+      headers[k.trim()] = v.join(":").trim();
+    }
+  });
+  if(bodyText && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: (method !== "GET" && method !== "HEAD") ? bodyText : undefined
+    });
+    const contentType = res.headers.get("content-type") || "";
+    let text;
+    if(contentType.includes("application/json")) text = JSON.stringify(await res.json(), null, 2);
+    else text = await res.text();
+    document.getElementById("result").textContent = text;
+  } catch(err) {
+    document.getElementById("result").textContent = "エラー:\n" + err;
+  }
+};
+</script>
+</body>
+</html>
