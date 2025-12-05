@@ -7,7 +7,11 @@
   "banner": null,
   "accent_color": "#3183846",
   "global_name": "わたあめえ",
-  "avatar_decoration_data": null,
+  "avatar_decoration_data": {
+    "asset": "a_82442053e3da77f379586817b2709365",
+    "sku_id": "1440174638930853950",
+    "expires_at": 1768507200
+  },
   "display_name_styles": null,
   "banner_color": "#3094e6",
   "clan": {
