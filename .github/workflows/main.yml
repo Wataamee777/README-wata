@@ -1,9 +1,9 @@
-name: Update Discord Profile
+name: Update Profiles
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"  # 6時間ごと（好きに変えてOK）
+    - cron: "0 */6 * * *" # 6時間ごと
 
 jobs:
   fetch:
@@ -21,43 +21,36 @@ jobs:
       - name: Install axios
         run: npm install axios
 
-      - name: Fetch Discord User Data
+      - name: Fetch Discord Profile
         env:
           DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          cat << 'EOF' > fetch.js
-          import axios from "axios";
-          import fs from "fs";
+          cat << 'EOF' > fetch_profile.js
+          import axios from 'axios';
+          import fs from 'fs';
 
           const userId = process.env.DISCORD_USER_ID;
           const token = process.env.DISCORD_BOT_TOKEN;
 
           async function main() {
-            const url = `https://discord.com/api/v10/users/${userId}`;
-            const res = await axios.get(url, {
+            const res = await axios.get(`https://discord.com/api/v10/users/${userId}`, {
               headers: { Authorization: `Bot ${token}` }
             });
-
             const d = res.data;
 
             const profile = {
               id: d.id,
               username: d.username,
               global_name: d.global_name,
-              avatar: d.avatar
-                ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=512`
-                : null,
-              banner: d.banner
-                ? `https://cdn.discordapp.com/banners/${d.id}/${d.banner}.png?size=512`
-                : null,
+              avatar: d.avatar ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=512` : null,
+              banner: d.banner ? `https://cdn.discordapp.com/banners/${d.id}/${d.banner}.png?size=512` : null,
               banner_color: d.banner_color,
-              accent_color: d.accent_color,
-              avatar_decoration: d.avatar_decoration_data || null
+              accent_color: d.accent_color
             };
 
-            fs.writeFileSync("profile.json", JSON.stringify(profile, null, 2));
-            console.log("PROFILE UPDATED:", profile);
+            fs.writeFileSync('data/profile.json', JSON.stringify(profile, null, 2));
+            console.log('profile.json updated!');
           }
 
           main().catch(err => {
@@ -66,12 +59,12 @@ jobs:
           });
           EOF
 
-          node fetch.js
+          node fetch_profile.js
 
       - name: Commit changes
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add profile.json
-          git commit -m "Update Discord profile" || echo "No changes"
+          git add data/profile.json
+          git commit -m "Update Discord profile" || echo "No changes to commit"
           git push
