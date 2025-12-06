@@ -1,3 +1,6 @@
+/* Google font Icon */
+@import url(https://fonts.googleapis.com/icon?family=Material+Icons);
+
 @font-face {
   font-family: 'Keifont';
   src: url('/keifont.ttf') format('truetype'); /* ttfを追加 */
