@@ -32,6 +32,9 @@ async function loadProfile() {
     a.className = 'btn';
     a.textContent = s.name;
     snsContainer.appendChild(a);
+    
+    const br = document.createElement('br');
+    snsContainer.appendChild(br);
   });
 
   // ゲームタグ（クリックでコピー）
