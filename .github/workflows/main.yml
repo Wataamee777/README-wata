@@ -1,12 +1,10 @@
-name: Update Profiles
+name: Update Discord Profile
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 */6 * * *" # 6時間ごと
 
 jobs:
-  fetch:
+  update-profile:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,13 +16,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install axios
-        run: npm install axios
-
-      - name: Fetch Discord Profile
-        env:
-          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      - name: Create fetch_profile.js
         run: |
           cat << 'EOF' > fetch_profile.js
           import axios from 'axios';
@@ -49,22 +41,26 @@ jobs:
               accent_color: d.accent_color
             };
 
-            fs.writeFileSync('data/profile.json', JSON.stringify(profile, null, 2));
+            fs.writeFileSync('profile.json', JSON.stringify(profile, null, 2));
             console.log('profile.json updated!');
           }
 
-          main().catch(err => {
-            console.error(err);
-            process.exit(1);
-          });
+          main().catch(err => { console.error(err); process.exit(1); });
           EOF
 
-          node fetch_profile.js
+      - name: Install axios
+        run: npm install axios
+
+      - name: Run fetch_profile.js
+        env:
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: node fetch_profile.js
 
       - name: Commit changes
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add data/profile.json
+          git add profile.json
           git commit -m "Update Discord profile" || echo "No changes to commit"
           git push
