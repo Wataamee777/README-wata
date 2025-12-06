@@ -1,4 +1,4 @@
-name: Update Discord Profile
+name: Update Profiles
 
 on:
   workflow_dispatch:
