@@ -3,60 +3,98 @@ async function loadProfile() {
   const resProfile = await fetch('profile.json');
   const profile = await resProfile.json();
 
-    if (profile.banner) {
-      document.body.style.backgroundImage = `url(${profile.banner})`;
-      document.body.style.backgroundColor = '';
-    } else if (profile.banner_color) {
-      document.body.style.backgroundColor = `${profile.banner_color}`;
-      document.body.style.backgroundImage = 'none';
-    }
-  
-  // アイコン
-  const avatarEl = document.getElementById('avatar');
-  avatarEl.src = profile.avatar;
+  // 背景
+  if (profile.banner) {
+    document.body.style.backgroundImage = `url(${profile.banner})`;
+    document.body.style.backgroundColor = '';
+  } else if (profile.banner_color) {
+    document.body.style.backgroundColor = profile.banner_color;
+    document.body.style.backgroundImage = 'none';
+  }
 
-  // ユーザー名
-  document.getElementById('global_name').textContent = profile.global_name || profile.username;
+  // アイコン
+  document.getElementById('avatar').src = profile.avatar;
+
+  // 名前
+  document.getElementById('global_name').textContent =
+    profile.global_name || profile.username;
   document.getElementById('username').textContent = profile.username;
 
-  // SNS / ゲームタグ / サイト集
+  // リンクデータ
   const resLinks = await fetch('list.json');
   const links = await resLinks.json();
 
-  // SNSリンク
+  // ─────────────────────────────────
+  // SNSリンク（open_in_new 固定）
+  // ─────────────────────────────────
   const snsContainer = document.getElementById('sns-links');
   links.sns.forEach(s => {
     const a = document.createElement('a');
     a.href = s.url;
     a.target = '_blank';
     a.className = 'btn';
-    a.textContent = s.name;
-    snsContainer.appendChild(a);
-    });
 
-  // ゲームタグ（クリックでコピー）
+    // 表示名
+    const text = document.createElement('span');
+    text.textContent = s.name;
+
+    // open_in_new アイコン
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined link-icon';
+    icon.textContent = 'open_in_new';
+
+    a.appendChild(text);
+    a.appendChild(icon);
+    snsContainer.appendChild(a);
+  });
+
+  // ─────────────────────────────────
+  // ゲーマータグ（コピー）
+  // ─────────────────────────────────
   const tagContainer = document.getElementById('gamer-tags');
+
   links.games.forEach(t => {
     const btn = document.createElement('button');
-    btn.className = 'btn';
-    btn.textContent = `${t.name}: ${t.tag}`;
+    btn.className = 'btn copy-btn';
+
+    const label = document.createElement('span');
+    label.textContent = `${t.name}: ${t.tag}`;
+
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined copy-icon';
+    icon.textContent = 'content_copy';
+
     btn.onclick = () => {
       navigator.clipboard.writeText(t.tag).then(() => {
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = `${t.name}: ${t.tag}`, 1000);
+        icon.textContent = 'check';
+        setTimeout(() => (icon.textContent = 'content_copy'), 800);
       });
     };
-    tagContainer.appendChild(btn);
-    });
 
-  // サイト集
+    btn.appendChild(label);
+    btn.appendChild(icon);
+    tagContainer.appendChild(btn);
+  });
+
+  // ─────────────────────────────────
+  // サイトリンク（open_in_new 固定）
+  // ─────────────────────────────────
   const siteContainer = document.getElementById('site-links');
   links.sites.forEach(s => {
     const a = document.createElement('a');
     a.href = s.url;
     a.target = '_blank';
     a.className = 'btn';
-    a.textContent = s.name;
+
+    const text = document.createElement('span');
+    text.textContent = s.name;
+
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined link-icon';
+    icon.textContent = 'open_in_new';
+
+    a.appendChild(text);
+    a.appendChild(icon);
     siteContainer.appendChild(a);
   });
 }
