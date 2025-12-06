@@ -22,7 +22,7 @@ async function loadProfile() {
   document.getElementById('username').textContent = profile.username;
 
   // SNS / ゲームタグ / サイト集
-  const resLinks = await fetch('link.json');
+  const resLinks = await fetch('list.json');
   const links = await resLinks.json();
 
   // SNSリンク
