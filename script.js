@@ -3,16 +3,14 @@ async function loadProfile() {
   const resProfile = await fetch('profile.json');
   const profile = await resProfile.json();
 
-  // バナー設定
-  const bannerEl = document.getElementById('banner');
-  if(profile.banner){
-    bannerEl.style.backgroundImage = `url(${profile.banner})`;
-  } else if(profile.banner_color){
-    bannerEl.style.backgroundColor = profile.banner_color;
-  } else {
-    bannerEl.style.backgroundColor = '#111';
-  }
-
+    if (profile.banner) {
+      document.body.style.backgroundImage = `url(${profile.banner})`;
+      document.body.style.backgroundColor = '';
+    } else if (profile.banner_color) {
+      document.body.style.backgroundColor = `#${profile.banner_color.toString(16)}`;
+      document.body.style.backgroundImage = 'none';
+    }
+  
   // アイコン
   const avatarEl = document.getElementById('avatar');
   avatarEl.src = profile.avatar;
