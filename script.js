@@ -50,6 +50,8 @@ async function loadProfile() {
       });
     };
     tagContainer.appendChild(btn);
+    const br = document.createElement('br');
+    tagContainer.appendChild(br);
   });
 
   // サイト集
