@@ -32,10 +32,7 @@ async function loadProfile() {
     a.className = 'btn';
     a.textContent = s.name;
     snsContainer.appendChild(a);
-    
-    const br = document.createElement('br');
-    snsContainer.appendChild(br);
-  });
+    });
 
   // ゲームタグ（クリックでコピー）
   const tagContainer = document.getElementById('gamer-tags');
@@ -50,9 +47,7 @@ async function loadProfile() {
       });
     };
     tagContainer.appendChild(btn);
-    const br = document.createElement('br');
-    tagContainer.appendChild(br);
-  });
+    });
 
   // サイト集
   const siteContainer = document.getElementById('site-links');
