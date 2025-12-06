@@ -1,5 +1,5 @@
 async function loadProfile() {
-  // Discordプロフィール
+  // ────────── Discordプロフィール ──────────
   const resProfile = await fetch('profile.json');
   const profile = await resProfile.json();
 
@@ -12,52 +12,52 @@ async function loadProfile() {
     document.body.style.backgroundImage = 'none';
   }
 
-  // アイコン
+  // アイコン & 名前
   document.getElementById('avatar').src = profile.avatar;
-
-  // 名前
   document.getElementById('global_name').textContent =
     profile.global_name || profile.username;
   document.getElementById('username').textContent = profile.username;
 
-  // リンクデータ
+  // ────────── リンクデータ読み込み ──────────
   const resLinks = await fetch('list.json');
   const links = await resLinks.json();
 
-  // ─────────────────────────────────
-  // SNSリンク（open_in_new 固定）
-  // ─────────────────────────────────
+
+  // ---------------------------------------------------------
+  //  SNSリンク（アイコン → テキスト）
+  // ---------------------------------------------------------
   const snsContainer = document.getElementById('sns-links');
   links.sns.forEach(s => {
-    const text = document.createElement('span');
-    text.textContent = s.name;
+    const a = document.createElement('a');
+    a.href = s.url;
+    a.target = '_blank';
+    a.className = 'btn';
 
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined link-icon';
     icon.textContent = 'open_in_new';
 
-    a.appendChild(text);
-    a.appendChild(icon);
-    
-    const a = document.createElement('a');
-    a.href = s.url;
-    a.target = '_blank';
-    a.className = 'btn';
+    const text = document.createElement('span');
+    text.textContent = s.name;
+
+    a.appendChild(icon);  // ← アイコン先
+    a.appendChild(text);  // ← テキスト後
     snsContainer.appendChild(a);
   });
 
-  // ─────────────────────────────────
-  // ゲーマータグ（コピー）
-  // ─────────────────────────────────
+
+  // ---------------------------------------------------------
+  //  ゲーマータグ（コピー）アイコン → テキスト
+  // ---------------------------------------------------------
   const tagContainer = document.getElementById('gamer-tags');
 
   links.games.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'btn copy-btn';
+
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined copy-icon';
     icon.textContent = 'content_copy';
-
-    const btn = document.createElement('button');
-    btn.className = 'btn copy-btn';
 
     const label = document.createElement('span');
     label.textContent = `${t.name}: ${t.tag}`;
@@ -69,30 +69,31 @@ async function loadProfile() {
       });
     };
 
-    btn.appendChild(label);
-    btn.appendChild(icon);
+    btn.appendChild(icon);  // ← アイコン先
+    btn.appendChild(label); // ← テキスト後
     tagContainer.appendChild(btn);
   });
 
-  // ─────────────────────────────────
-  // サイトリンク（open_in_new 固定）
-  // ─────────────────────────────────
+
+  // ---------------------------------------------------------
+  //  サイトリンク（アイコン → テキスト）
+  // ---------------------------------------------------------
   const siteContainer = document.getElementById('site-links');
   links.sites.forEach(s => {
-    const text = document.createElement('span');
-    text.textContent = s.name;
-
-    const icon = document.createElement('span');
-    icon.className = 'material-symbols-outlined link-icon';
-    icon.textContent = 'open_in_new';
-
     const a = document.createElement('a');
     a.href = s.url;
     a.target = '_blank';
     a.className = 'btn';
 
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined link-icon';
+    icon.textContent = 'open_in_new';
+
+    const text = document.createElement('span');
+    text.textContent = s.name;
+
+    a.appendChild(icon);  
     a.appendChild(text);
-    a.appendChild(icon);
     siteContainer.appendChild(a);
   });
 }
