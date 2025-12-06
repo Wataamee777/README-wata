@@ -29,22 +29,20 @@ async function loadProfile() {
   // ─────────────────────────────────
   const snsContainer = document.getElementById('sns-links');
   links.sns.forEach(s => {
-    const a = document.createElement('a');
-    a.href = s.url;
-    a.target = '_blank';
-    a.className = 'btn';
-
-    // 表示名
     const text = document.createElement('span');
     text.textContent = s.name;
 
-    // open_in_new アイコン
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined link-icon';
     icon.textContent = 'open_in_new';
 
     a.appendChild(text);
     a.appendChild(icon);
+    
+    const a = document.createElement('a');
+    a.href = s.url;
+    a.target = '_blank';
+    a.className = 'btn';
     snsContainer.appendChild(a);
   });
 
@@ -54,15 +52,15 @@ async function loadProfile() {
   const tagContainer = document.getElementById('gamer-tags');
 
   links.games.forEach(t => {
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined copy-icon';
+    icon.textContent = 'content_copy';
+
     const btn = document.createElement('button');
     btn.className = 'btn copy-btn';
 
     const label = document.createElement('span');
     label.textContent = `${t.name}: ${t.tag}`;
-
-    const icon = document.createElement('span');
-    icon.className = 'material-symbols-outlined copy-icon';
-    icon.textContent = 'content_copy';
 
     btn.onclick = () => {
       navigator.clipboard.writeText(t.tag).then(() => {
@@ -81,17 +79,17 @@ async function loadProfile() {
   // ─────────────────────────────────
   const siteContainer = document.getElementById('site-links');
   links.sites.forEach(s => {
-    const a = document.createElement('a');
-    a.href = s.url;
-    a.target = '_blank';
-    a.className = 'btn';
-
     const text = document.createElement('span');
     text.textContent = s.name;
 
     const icon = document.createElement('span');
     icon.className = 'material-symbols-outlined link-icon';
     icon.textContent = 'open_in_new';
+
+    const a = document.createElement('a');
+    a.href = s.url;
+    a.target = '_blank';
+    a.className = 'btn';
 
     a.appendChild(text);
     a.appendChild(icon);
