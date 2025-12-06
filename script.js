@@ -7,7 +7,7 @@ async function loadProfile() {
       document.body.style.backgroundImage = `url(${profile.banner})`;
       document.body.style.backgroundColor = '';
     } else if (profile.banner_color) {
-      document.body.style.backgroundColor = `#${profile.banner_color}`;
+      document.body.style.backgroundColor = `${profile.banner_color}`;
       document.body.style.backgroundImage = 'none';
     }
   
