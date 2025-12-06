@@ -2,6 +2,12 @@ name: Update Profiles
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+    
+permissions:
+  contents: write
+
 
 jobs:
   update-profile:
@@ -58,6 +64,8 @@ jobs:
         run: node fetch_profile.js
 
       - name: Commit changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
