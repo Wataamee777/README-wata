@@ -1,69 +1,77 @@
 name: Update Discord Profile
 
-permissions:
-  contents: write
-
 on:
-  schedule:
-    - cron: "*/5 * * * *" # 5分ごと
   workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"  # 6時間ごと（好きに変えてOK）
 
 jobs:
-  fetch-discord:
+  fetch:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Fetch Discord profile
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install axios
+        run: npm install axios
+
+      - name: Fetch Discord User Data
         env:
-          TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          USER_ID: "1099098129338466385"
-          GUILD_ID: "1391264661554335845"
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: |
-          base="https://cdn.discordapp.com"
+          cat << 'EOF' > fetch.js
+          import axios from "axios";
+          import fs from "fs";
 
-          # Discord API から取得
-          curl -s -H "Authorization: Bot $TOKEN" \
-            https://discord.com/api/v10/users/$USER_ID > profile.json
+          const userId = process.env.DISCORD_USER_ID;
+          const token = process.env.DISCORD_BOT_TOKEN;
 
-          curl -s -H "Authorization: Bot $TOKEN" \
-            https://discord.com/api/v10/guilds/$GUILD_ID/members/$USER_ID > member.json
+          async function main() {
+            const url = `https://discord.com/api/v10/users/${userId}`;
+            const res = await axios.get(url, {
+              headers: { Authorization: `Bot ${token}` }
+            });
 
-          curl -s -H "Authorization: Bot $TOKEN" \
-            https://discord.com/api/v10/guilds/$GUILD_ID > guild.json
+            const d = res.data;
 
-          # 外部 jq で最低限整形
-          jq -s --arg base "$base" -f .github/workflows/process_discord.jq profile.json member.json guild.json > discord_min.json
+            const profile = {
+              id: d.id,
+              username: d.username,
+              global_name: d.global_name,
+              avatar: d.avatar
+                ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=512`
+                : null,
+              banner: d.banner
+                ? `https://cdn.discordapp.com/banners/${d.id}/${d.banner}.png?size=512`
+                : null,
+              banner_color: d.banner_color,
+              accent_color: d.accent_color,
+              avatar_decoration: d.avatar_decoration_data || null
+            };
 
-      - name: Translate public_flags
+            fs.writeFileSync("profile.json", JSON.stringify(profile, null, 2));
+            console.log("PROFILE UPDATED:", profile);
+          }
+
+          main().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          EOF
+
+          node fetch.js
+
+      - name: Commit changes
         run: |
-          node <<'JS'
-          const fs = require('fs');
-          const flagsMap = {
-            1: "Discordスタッフ",
-            2: "パートナー",
-            4: "HypeSquad",
-            8: "バグハンター（レベル1）",
-            64: "HypeSquad Bravery（赤）",
-            128: "HypeSquad Brilliance（青）",
-            256: "HypeSquad Balance（緑）",
-            512: "早期サポーター",
-            16384: "バグハンター（レベル2）",
-            131072: "認証済みBot開発者",
-            4194304: "アクティブデベロッパー",
-            33554432: "クエスト参加者",
-            41943040: "オーブ保持者"
-          };
-          const data = JSON.parse(fs.readFileSync('discord_min.json'));
-          const pf = data.public_flags_raw || 0;
-          data.public_flags = Object.entries(flagsMap).filter(([k]) => (pf & k) != 0).map(([_,v]) => v);
-          fs.writeFileSync('discord.json', JSON.stringify(data, null, 2));
-          JS
-
-      - name: Commit JSON
-        run: |
-          git config user.name Wataamee777
-          git config user.email wataamee777@gmail.com
-          git add discord.json
-          git commit -m "update discord profile" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/Wataamee777/README-wata.git HEAD:main
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add profile.json
+          git commit -m "Update Discord profile" || echo "No changes"
+          git push
