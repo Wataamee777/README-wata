@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wataamee-site-v1';
+const CACHE_NAME = 'wataamee777site';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -21,6 +21,7 @@ const urlsToCache = [
   '/assets/pokepoke.png',
   '/assets/qiita.png',
   '/assets/roblox.png',
+  '/list.json'
     // 他にキャッシュしたいファイルがあればここに追加
 ];
 

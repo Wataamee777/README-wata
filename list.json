@@ -1,0 +1,31 @@
+{
+  "sns": [
+    { "name": "X", "url": "https://x.com/@wataamee_777" },
+    { "name": "Youtube", "url": "https://www.youtube.com/channel/UCSGt_coWicg5pits8Nq6Ddg?sub_confirmation=1" },
+    { "name": "Twitch", "url": "https://twitch.tv/wataamee777" },
+    { "name": "Spotify", "url": "https://open.spotify.com/user/31eqe2fyzc4ylow7pugftsupak5y" },    
+    { "name": "GitHub", "url": "https://github.com/Wataamee777" },
+    { "name": "qiita", "url": "https://qiita.com/Wataamee777" },
+    { "name": "bluesky", "url": "https://bsky.app/profile/wataamee777.f5.si" },
+    { "name": "Tiktok", "url": "https://tiktok.com/@wataamee314"},
+    { "name": "Discord", "url": "https://discord.com/users/1099098129338466385"},
+    { "name": "Roblox", "url": "https://www.roblox.com/ja/users/7424117974/profile" },
+    { "name": "Fortnite Tracker", "url": "https://fortnitetracker.com/profile/all/%e3%82%8f%e3%81%9f%e3%81%82%e3%82%81%e3%81%88777" }
+  ],
+  "games": [
+    { "name": "Fortnite", "tag": "わたあめえ777" },
+    { "name": "Roblox", "tag": "wataamee7777" },
+    { "name": "xbox", "tag": "わたあめえ777" },
+    { "name": "ポケポケ", "tag": "わたあめえ777" },
+    { "name": "プロセカ", "tag": "わたあめえ777" }
+  ],
+  "sites": [
+    { "name": "トップドメイン", "url": "https://wataamee777.f5.si" },
+    { "name": "GitHub Pages", "url": "https://Wataamee777.github.io" },
+    { "name": "統合版対応スキン取得サイト", "url": "https://skin.wataamee777.f5.si" },
+    { "name": "さくらbot", "url": "https://bot.sakurahp.f5.si" },
+    { "name": "さくらbot規約", "url": "https://kiyaku.bot.sakurahp.f5.si" },
+    { "name": "さくら雑談王国公式サイト(作者別。開発に少し携わってる程度)", "url": "https://sakura.kotoca.net" },
+    { "name": "いんめ (リンク載せてくれたから)", "url": "https://imme.kotoca.net" }
+  ]
+}

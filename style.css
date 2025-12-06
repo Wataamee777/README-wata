@@ -1,265 +1,56 @@
-/* ===== 共通設定 ===== */
-:root {
-  --bg-color: #fff0f6;
-  --text-color: #333;
-}
-body.dark {
-  --bg-color: #121212;
-  --text-color: #eee;
-}
-
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  max-width: 800px;
-  margin: auto;
-  padding: 1rem;
-  background: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color 0.5s ease, color 0.5s ease;
-  opacity: 0;
-  animation: fadeIn 1s forwards;
-  position: relative;
-  z-index: 0;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: var(--bg-color); /* 背景色固定 */
-  z-index: -1; /* 最背面に */
-}
-
-/* ===== フェードインアニメーション ===== */
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-.fade-in-scroll {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-.fade-in-scroll.fade-in-active {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ===== ヘッダー ===== */
-header {
-  text-align: center;
-  padding-bottom: 2rem;
-  position: relative;
-}
-#typewriter {
-  font-weight: 700;
-  font-size: 2.5rem;
-  letter-spacing: 2px;
-  min-height: 3rem;
   margin: 0;
-}
-
-/* ===== ダークモードボタン ===== */
-#darkModeToggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: linear-gradient(90deg, #ff69b4, #ff1493);
+  font-family: 'Segoe UI', sans-serif;
+  background: #000;
   color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  background-size: 200% 100%;
-  background-position: 0% 0%;
-  transition: background-position 0.5s ease;
-  z-index: 1000;
+  text-align: center;
 }
-#darkModeToggle:hover {
-  background-position: 100% 0%;
-}
-
-/* ===== リスト系 ===== */
-ul {
-  list-style: none;
-  padding-left: 0;
-}
-li {
-  font-size: 1.1rem;
-  margin: 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-li a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-li a:hover {
-  color: #ff1493;
-}
-
-/* ===== ボタン（コピーなど） ===== */
-button {
-  background-color: #ff69b4;
-  border: none;
-  color: #fff;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  position: relative;
-  overflow: hidden;
-  transition: background-color 0.3s ease;
-}
-button:hover {
-  background-color: #e553b6;
-}
-
-/* リップル効果 */
-.ripple {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  animation: ripple-effect 0.6s linear;
-  pointer-events: none;
-  transform: scale(0);
-  opacity: 1;
-}
-@keyframes ripple-effect {
-  to {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-/* ===== スクロールトップボタン ===== */
-#scrollTopBtn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background: #ff69b4;
-  border: none;
-  color: #fff;
-  padding: 0.8rem 1rem;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.3rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1000;
-}
-#scrollTopBtn.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ===== Discordプロフィールセクション ===== */
-#discord-profile {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: var(--bg-color);
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-#discord-avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 10px #7289da;
-}
-
-#discord-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-#discord-name {
-  font-weight: 700;
-  font-size: 1.4rem;
-  color: var(--text-color);
-}
-
-#discord-status,
-#discord-custom,
-#discord-createdat {
-  font-size: 1rem;
-  color: var(--text-color);
-}
-
-#discord-badges {
-  margin-top: 0.5rem;
-}
-#discord-badges img {
-  height: 24px;
-  margin-right: 6px;
-  vertical-align: middle;
-  transition: transform 0.3s ease;
-}
-#discord-badges img:hover {
-  transform: scale(1.2);
-  cursor: pointer;
-}
-/* その他 */
-#form-textarea {
-  border-radius: 10px;
-    padding: 10px;
-    border: none;
-    background-color: #ff69da22;
-}
-
-
-#discord-profile {
-  background: #2f3136;
-  border-radius: 8px;
-  overflow: hidden;
-  color: #fff;
-  font-family: sans-serif;
-  width: 350px;
-}
-
 .banner {
-  height: 100px;
-  background: #5865f2; /* fallback */
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.6);
+  position: relative;
 }
-
-.profile-main {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  gap: 15px;
-}
-
-#avatar {
-  border-radius: 50%;
-  border: 3px solid #2f3136;
-  margin-top: -40px; /* overlap on banner */
-}
-
-.profile-info span {
-  display: block;
-  margin: 3px 0;
-}
-
-.tag {
+.profile-container {
+  margin-top: -80px;
   display: inline-block;
-  padding: 2px 6px;
-  border: 1px solid #fff;
-  border-radius: 4px;
-  font-size: 0.9em;
-  background: rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+.avatar {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 4px solid #9b59b6;
+  box-shadow: 0 0 20px #9b59b6;
+}
+h1, h2 {
+  color: #9b59b6;
+  text-shadow: 0 0 8px #9b59b6;
+  margin: 10px 0;
+}
+.username {
+  color: #fff;
+  text-shadow: 0 0 6px #9b59b6;
+  margin-bottom: 20px;
+}
+.links, .tags {
+  margin: 10px 0;
+}
+.btn {
+  display: inline-block;
+  margin: 5px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #000;
+  border: 2px solid #9b59b6;
+  color: #9b59b6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn:hover {
+  box-shadow: 0 0 15px #9b59b6;
+  background: #111;
 }

@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>わたあめえ - 自己紹介ページ</title>
-
-  <meta name="description" content="わたあめえの自己紹介ページ。SNSリンク、サイト一覧、お知らせをJSON管理で表示。PWA対応済み。" />
-  <meta name="keywords" content="わたあめえ, 自己紹介, SNS, Fortnite, YouTube, Twitch, Discord, プロセカ, ポケポケ, Roblox" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>わたあめえ</title>
+<link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="わたあめえの自己紹介" />
+  <meta name="keywords" content="わたあめえ, 自己紹介, SNS, Fortnite, YouTube, Twitch, Discord, プロセカ, Roblox" />
   <meta name="author" content="わたあめえ" />
   <link rel="canonical" href="https://wataamee777.f5.si/" />
 
   <!-- OGP -->
   <meta property="og:title" content="わたあめえ - 自己紹介ページ" />
-  <meta property="og:description" content="わたあめえのSNSリンクやサイト一覧、お知らせをまとめたページ。" />
+  <meta property="og:description" content="ゆっくりしていってね" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://wataamee777.f5.si/" />
   <meta property="og:image" content="https://wataamee777.f5.si/assets/Yukkuri.png" />
   <meta property="og:site_name" content="わたあめえ" />
 
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="わたあめえ - 自己紹介ページ" />
-  <meta name="twitter:description" content="SNS・ゲームIDや最新情報まとめ。" />
+  <meta name="twitter:title" content="わたあめえ - 自己紹介" />
+  <meta name="twitter:description" content="ゆっくりしていってね" />
   <meta name="twitter:image" content="https://wataamee777.f5.si/assets/favicon.png" />
 
   <!-- Favicon -->
@@ -33,13 +33,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
-  
-  <script src="https://dmc1acwvwny3.cloudfront.net/atatus-spa.js"></script>
-  <script type="text/javascript">
-    atatus.config('3b8a17d616d24583a30d41294ed01917').install();
-  </script>
-
-  <!-- Google Analytics -->
+    <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VFBZEZFM4M"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -47,72 +41,32 @@
     gtag('js', new Date());
     gtag('config', 'G-VFBZEZFM4M');
   </script>
-
-  <link rel="stylesheet" href="style.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-  />
 </head>
 <body>
-  <header>
-    <h1 id="typewriter"></h1>
-    <button id="darkModeToggle" aria-label="Toggle Dark Mode" onclick="darkModeToggleClick()">🌞 &sol; 🌙</button>
-  </header>
 
-  <main>
-    <h1>Please be patient, the site will be back up and running soon.</h1>
-  <!---<section id="discord-profile">
-   <div class="banner"></div>
-    <div class="profile-main">
-      <img id="avatar" src="" alt="avatar" width="80">
-      <div class="profile-info">
-        <span id="global_name"></span><br>
-        <span id="username"></span><br>
-        <span id="status"></span><br>
-        <span id="tag"></span>
-      </div>
-    </div>
-  </section>--->
+<div class="banner" id="banner"></div>
 
+<div class="profile-container">
+  <img id="avatar" class="avatar" src="" alt="Avatar">
+  <h1 id="global_name"></h1>
+  <div class="username" id="username"></div>
+</div>
 
-    <section id="sns" class="fade-in-scroll">
-      <h2>📱 SNS & ゲームID</h2>
-      <ul id="sns-list"></ul>
-    </section>
+<section>
+  <h2>SNSリンク</h2>
+  <div class="links" id="sns-links"></div>
+</section>
 
-    <section id="news" class="fade-in-scroll">
-      <h2>📰 お知らせ</h2>
-      <ul id="news-list"></ul>
-    </section>
+<section>
+  <h2>ゲームタグ</h2>
+  <div class="tags" id="gamer-tags"></div>
+</section>
 
-    <section id="sites" class="fade-in-scroll">
-      <h2>🌐 サイト一覧</h2>
-      <ul id="site-list"></ul>
-    </section>
-    <section id="states" class="fade-in-scroll">
-      <h2>📊 統計</h2>
-      <iframe src="https://fortnitejp.news/widget.html?account_id=a9d778dbe31f4e3092dade8e696f8fdd&ranking_type=ranked_blastberry_build&language=ja&gradient_start=%23202377&gradient_end=%23723FBF&color=%2300AEFF82" frameborder="0" scrolling="no" width="500" height="auto"></iframe>
-      <img src="https://raw.githubusercontent.com/Wataamee777/Wataamee777/main/github-metrics.svg" alt="github" style="display: block; margin: 1rem 0; max-width: 100%;" onselectstart="return false;" onmousedown="return false;" oncontextmenu="return false;"></img>
-    </section>
-    <section id="contact" class="fade-in-scroll">
-      <h2>✉️ お問い合わせ</h2>
-      <form action="https://getform.io/f/agdlodob" method="POST">
-        <textarea id="form-textarea"name="message" rows="6" cols="40" placeholder="お問い合わせ内容を入力してください" required></textarea><br />
-        <input type="text" name="_honey" style="display:none" />
-        <button type="submit">📤 送信する</button>
-      </form>
-    </section>
+<section>
+  <h2>自分のサイト集</h2>
+  <div class="links" id="site-links"></div>
+</section>
 
-    <button id="scrollTopBtn" title="トップへ">
-      <i class="fas fa-arrow-up"></i>
-    </button>
-  </main>
-
-  <footer>
-    <p>&copy; わたあめえ 2025</p>
-  </footer>
-
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
