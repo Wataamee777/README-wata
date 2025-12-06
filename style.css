@@ -5,6 +5,7 @@ body {
   font-family: 'Segoe UI', sans-serif;
   color: white;
   background-color: #111; /* デフォルト黒 */
+  background-image: url('data/profile.json の banner'); /* あれば画像 */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
