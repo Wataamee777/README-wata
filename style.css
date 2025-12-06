@@ -57,9 +57,37 @@ body {
 
 .links-container .btn:hover {
   background: rgba(255, 255, 255, 0.3);
+  display: block;
 }
 h1, h2 {
   color: #9b59b6;
   text-shadow: 0 0 8px #9b59b6;
   margin: 10px 0;
+}
+.username {
+  color: #fff;
+  text-shadow: 0 0 6px #9b59b6;
+  margin-bottom: 20px;
+}
+.links, .tags {
+  margin: 10px 0;
+  display: block;
+}
+.btn {
+  display: inline-block;
+  margin: 5px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #000;
+  border: 2px solid #9b59b6;
+  color: #9b59b6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.2s;
+  display: block;
+}
+.btn:hover {
+  box-shadow: 0 0 15px #9b59b6;
+  background: #111;
+  display: block;
 }
