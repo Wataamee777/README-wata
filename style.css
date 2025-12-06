@@ -105,3 +105,52 @@ h1, h2 {
   display: block;
   font-family: 'Keifont';
 }
+.skills-section {
+  margin: 40px auto;
+  padding: 0 20px;
+  max-width: 900px;
+  font-family: 'Keifont';
+}
+
+.skills-section h2 {
+  text-align: center;
+  font-size: 2em;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.skill-card {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.skill-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.skill-header i {
+  font-size: 32px;
+}
+
+.skill-name {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.skill-desc {
+  margin: 0;
+  font-size: 0.9em;
+  color: #ddd;
+}
