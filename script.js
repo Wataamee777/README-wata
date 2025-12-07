@@ -1,6 +1,4 @@
-console.log("JS alive 1");
 document.addEventListener("DOMContentLoaded", async () => {
-console.log("JS alive 2");
 
   // ──────────────── プロフィール読み込み ────────────────
   async function loadProfile() {
@@ -8,30 +6,32 @@ console.log("JS alive 2");
     const resProfile = await fetch('profile.json');
     const profile = await resProfile.json();
 
-    // ───────────────────────────────
-    // 背景（バナー or バナー色 → グラデ生成）
-    // ───────────────────────────────
-    if (profile.banner) {
-      document.body.style.background = `
-        linear-gradient(
-          135deg,
-          rgba(0,0,0,0.6) 0%,
-          rgba(0,0,0,0.4) 40%,
-          rgba(0,0,0,0.6) 100%
-        ),
-        url(${profile.banner})
-      `;
-      document.body.style.backgroundSize = "cover";
-      document.body.style.backgroundPosition = "center";
+// ───────────────────────────────
+// 背景（バナー or バナー + アクセント）
+// ───────────────────────────────
+if (profile.banner) {
+  // バナー画像 → そのまま背景に
+  document.body.style.background = `
+    linear-gradient(
+      135deg,
+      rgba(0,0,0,0.6) 0%,
+      rgba(0,0,0,0.4) 40%,
+      rgba(0,0,0,0.6) 100%
+    ),
+    url(${profile.banner})
+  `;
+  document.body.style.backgroundSize = "cover";
+  document.body.style.backgroundPosition = "center";
 
-    } else if (profile.banner_color) {
-      const base = profile.banner_color;
-      const accent = generateAccentColor(base);
-
-      document.body.style.background = `
-        linear-gradient(135deg, ${base}, ${accent})
-      `;
-    }
+} else if (profile.banner_color && profile.accent_color) {
+  // JSON に accent_color が存在する → それを使う
+  document.body.style.background = `
+    linear-gradient(135deg, ${profile.banner_color}, #${profile.accent_color})
+  `;
+} else if (profile.banner_color) {
+  // 念のため fallback：単色
+  document.body.style.background = profile.banner_color;
+}
 
     // アイコンと名前
     document.getElementById('avatar').src = profile.avatar;
@@ -198,6 +198,4 @@ console.log("JS alive 2");
 
     img.addEventListener("click", handler);
   }
-console.log("JS alive 3");
 });
-console.log("JS alive 4");
