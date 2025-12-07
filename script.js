@@ -250,4 +250,35 @@ checkSecretTime();
 
     img.addEventListener("click", handler);
   }
+  
+    const shareButton = document.getElementById('shareButton');
+
+    // Web Share APIがブラウザで利用可能かチェック
+    if (navigator.share) {
+        shareButton.addEventListener('click', async () => {
+            try {
+                // 共有する内容を定義
+                await navigator.share({
+                    // 現在のページのタイトル (省略可)
+                    title: document.title, 
+                    
+                    // 共有したいテキストメッセージ
+                    text: 'このネオン風サイトがクール！ぜひ見てみて！', 
+                    
+                    // 共有したいURL (現在のページのURL)
+                    url: window.location.href 
+                });
+                console.log('共有に成功しました。');
+            } catch (error) {
+                // ユーザーが共有をキャンセルした場合や、エラーが発生した場合
+                console.error('共有エラー:', error);
+            }
+        });
+    } else {
+        // Web Share API に非対応のブラウザ向け
+        shareButton.textContent = '共有機能は非対応です';
+        shareButton.disabled = true;
+        // または、従来のTwitter/Facebookボタンなどを代わりに表示する処理
+        console.log('Web Share API はこのブラウザでサポートされていません。');
+    }
 });
