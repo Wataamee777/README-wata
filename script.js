@@ -26,7 +26,7 @@ if (profile.banner) {
 } else if (profile.banner_color && profile.accent_color) {
   // JSON に accent_color が存在する → それを使う
   document.body.style.background = `
-    linear-gradient(135deg, ${profile.banner_color}, #${profile.accent_color})
+    linear-gradient(135deg, ${profile.banner_color}, #111)
   `;
 } else if (profile.banner_color) {
   // 念のため fallback：単色
