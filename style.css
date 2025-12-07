@@ -154,3 +154,37 @@ h1, h2 {
   font-size: 0.9em;
   color: #ddd;
 }
+#nyan-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55); /* 背景暗くする */
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadein 0.3s ease forwards;
+}
+
+#nyan-overlay.show {
+  display: flex;
+}
+
+#nyan-img {
+  width: 320px;
+  max-width: 80%;
+  animation: pop 0.4s cubic-bezier(.18,.89,.32,1.28);
+}
+
+@keyframes pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
