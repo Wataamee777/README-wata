@@ -3,13 +3,33 @@ async function loadProfile() {
   const resProfile = await fetch('profile.json');
   const profile = await resProfile.json();
 
-  // 背景
+  // ---------------------------------------
+  // バナー or バナー色 → グラデ背景作成
+  // ---------------------------------------
+
   if (profile.banner) {
-    document.body.style.backgroundImage = `url(${profile.banner})`;
-    document.body.style.backgroundColor = '';
+    // バナー画像がある → 画像をぼかしてグラデに合わせる
+    document.body.style.background = `
+      linear-gradient(
+        135deg,
+        rgba(0,0,0,0.6) 0%,
+        rgba(0,0,0,0.4) 40%,
+        rgba(0,0,0,0.6) 100%
+      ),
+      url(${profile.banner})
+    `;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+
   } else if (profile.banner_color) {
-    document.body.style.backgroundColor = profile.banner_color;
-    document.body.style.backgroundImage = 'none';
+    // バナー色のままだと単色で地味 → アクセント色を自動生成
+
+    const base = profile.banner_color;
+    const accent = generateAccentColor(base);
+
+    document.body.style.background = `
+      linear-gradient(135deg, ${base}, ${accent})
+    `;
   }
 
   // アイコン & 名前
