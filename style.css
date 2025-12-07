@@ -34,6 +34,10 @@ body {
   border-radius: 50%;
   border: 4px solid #fff;
   margin-bottom: 20px;
+  -webkit-touch-callout: none; /* 画像長押しの保存メニューを無効化 */
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: auto;
 }
 
 /* ユーザー名 */
