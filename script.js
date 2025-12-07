@@ -151,3 +151,52 @@ overlay.addEventListener("click", () => {
   overlay.classList.remove("show");
   nyanAudio.pause();
 });
+let pressCount = 0;
+let konamiMode = false;
+
+document.getElementById("gamertag-btn").addEventListener("click", () => {
+  pressCount++;
+  if (pressCount >= 5) {
+    konamiMode = true;
+    pressCount = 0;
+    console.log("Konami mode ON");
+    // スマホはキーボードON（任意で）
+  }
+});
+// コナミコード: ↑↑↓↓←→←→BA
+const KONAMI = [38,38,40,40,37,39,37,39,66,65];
+let input = [];
+
+window.addEventListener("keydown", (e) => {
+  if (!konamiMode) return;
+
+  input.push(e.keyCode);
+  if (input.length > KONAMI.length) {
+    input.shift();
+  }
+
+  if (JSON.stringify(input) === JSON.stringify(KONAMI)) {
+    showCoinOverlay();
+    konamiMode = false;
+    input = [];
+  }
+});
+function showCoinOverlay() {
+  const overlay = document.getElementById("coin-overlay");
+  const img = document.getElementById("coin-img");
+
+  img.src = "assets/coin1.gif"; // 最初のコイン
+  overlay.style.display = "flex";
+
+  const handler = () => {
+    img.src = "assets/coin2.gif"; // 2回目のコイン
+    img.removeEventListener("click", handler);
+
+    // coin2が終わったら閉じる（任意で）
+    setTimeout(() => {
+      overlay.style.display = "none";
+    }, 1200); // GIF 長さに合わせて調整
+  };
+
+  img.addEventListener("click", handler);
+}
