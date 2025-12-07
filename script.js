@@ -120,7 +120,7 @@ linuxCard.addEventListener("click", () => {
     setTimeout(() => {
       overlay.classList.remove("show");
       nyanAudio.pause();
-    }, 3000);
+    }, 30000);
   }
 
   lastTap = now;
