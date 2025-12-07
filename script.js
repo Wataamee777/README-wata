@@ -1,4 +1,6 @@
+console.log("JS alive 1");
 document.addEventListener("DOMContentLoaded", async () => {
+console.log("JS alive 2");
 
   // ──────────────── プロフィール読み込み ────────────────
   async function loadProfile() {
@@ -196,5 +198,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     img.addEventListener("click", handler);
   }
-
+console.log("JS alive 3");
 });
+console.log("JS alive 4");
