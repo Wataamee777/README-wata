@@ -99,3 +99,35 @@ async function loadProfile() {
 }
 
 loadProfile();
+
+let lastTap = 0;
+const linuxCard = document.getElementById("linux-card");
+const overlay = document.getElementById("nyan-overlay");
+const nyanAudio = document.getElementById("nyan-audio");
+
+linuxCard.addEventListener("click", () => {
+  const now = Date.now();
+
+  // ダブルタップ判定（400ms以内）
+  if (now - lastTap < 400) {
+    overlay.classList.add("show");
+
+    nyanAudio.pause();
+    nyanAudio.currentTime = 0;
+    nyanAudio.play();
+
+    // 3秒で自動消える（ここ調整可）
+    setTimeout(() => {
+      overlay.classList.remove("show");
+      nyanAudio.pause();
+    }, 3000);
+  }
+
+  lastTap = now;
+});
+
+// オーバーレイクリックで閉じる
+overlay.addEventListener("click", () => {
+  overlay.classList.remove("show");
+  nyanAudio.pause();
+});
