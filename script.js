@@ -178,6 +178,58 @@ if (profile.banner) {
     }
   });
 
+  function checkSecretTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+
+    // 12時57分（午前・午後どちらでも）に限定
+    if (minutes === 57 && (hours === 12 || hours === 0 || hours === 12 + 12)) {
+        
+        // --- 1. ネオンカラーをディープパープルに変更する ---
+        const neonStyle = `
+            body {
+                /* 背景の雰囲気を少し暗くしても良い */
+                transition: background-color 1s;
+                background-color: #0d001a !important; 
+            }
+            /* サイトのネオン要素やハイライト部分のCSS変数を変更 */
+            :root {
+                --neon-glow-color: #ff00ff !important; /* マゼンタ */
+                --neon-text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff !important;
+            }
+            .neon-text {
+                color: var(--neon-glow-color) !important;
+                text-shadow: var(--neon-text-shadow);
+            }
+        `;
+        
+        // スタイルタグをHTMLに追加してCSSを上書き
+        const styleEl = document.createElement('style');
+        styleEl.id = 'secret-time-style';
+        styleEl.textContent = neonStyle;
+        document.head.appendChild(styleEl);
+
+        // --- 2. 秘密のメッセージをコンソールに出力（おまけ） ---
+        console.log(
+            "%c[SYSTEM ALERT]  ７７７！！.",
+            "font-size: 18px; color: #ff00ff; font-weight: bold;"
+        );
+
+    } else {
+        // 58分になったら元に戻すための処理（スタイルタグを削除）
+        const secretStyle = document.getElementById('secret-time-style');
+        if (secretStyle) {
+            secretStyle.remove();
+        }
+    }
+}
+
+// 1分ごとに時刻をチェックする（パフォーマンスへの影響は極小です）
+setInterval(checkSecretTime, 60000); 
+
+// ページロード時にも一度チェック
+checkSecretTime();
 
   // ──────────────── コイン表示 ────────────────
   function showCoinOverlay() {
