@@ -263,7 +263,7 @@ checkSecretTime();
                     title: document.title, 
                     
                     // 共有したいテキストメッセージ
-                    text: 'このネオン風サイトがクール！ぜひ見てみて！', 
+                    text: 'わたあめえの自己紹介!!', 
                     
                     // 共有したいURL (現在のページのURL)
                     url: window.location.href 
