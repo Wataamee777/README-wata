@@ -223,7 +223,6 @@ h1, h2 {
   text-decoration: none;
   cursor: pointer;
   transition: 0.2s;
-  display: block;
   font-family: 'Keifont';
 }
 #shareButton:hover {
