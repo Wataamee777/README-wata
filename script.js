@@ -256,6 +256,7 @@ checkSecretTime();
     // Web Share APIがブラウザで利用可能かチェック
     if (navigator.share) {
         shareButton.addEventListener('click', async () => {
+          alert("ボタン押されたよ！");
             try {
                 // 共有する内容を定義
                 await navigator.share({
