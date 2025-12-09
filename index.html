@@ -241,7 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("shareButton");
 
   btn.addEventListener("click", async () => {
-    alert("ボタン押された！"); // ← まずこれで動作確認できる
 
     if (!navigator.share) {
       alert("navigator.share に非対応だよ");
