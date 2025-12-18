@@ -4,18 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>PixPin - 簡易短縮サービス</title>
-<link rel="icon" href="https://wataamee777.f5.si/assets/favicon.ico" />
+<link rel="icon" href="https://wata777.f5.si/assets/favicon.ico" />
 
 <!-- OGP -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="PixPin - テキスト短縮サービス">
 <meta property="og:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
-<meta property="og:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
-<meta property="og:url" content="https://wataamee777.f5.si/pixpin/">
+<meta property="og:image" content="https://wata777.f5.si/assets/Yukkuri.png">
+<meta property="og:url" content="https://wata777.f5.si/pixpin/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PixPin - テキスト短縮サービス">
 <meta name="twitter:description" content="テキスト・画像・URLを短縮して簡単に共有できるサービス">
-<meta name="twitter:image" content="https://wataamee777.f5.si/assets/Yukkuri.png">
+<meta name="twitter:image" content="https://wata777.f5.si/assets/Yukkuri.png">
 
 <style>
 body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; background:#eef; margin:0; padding:20px; }
@@ -96,7 +96,7 @@ document.getElementById('shareBtn').onclick=async()=>{
     value=await fileToBase64(file); 
   }
   const short=type.charAt(0)+encodeBase62(value);
-  const shareLink=`https://wataamee777.f5.si/pixpin/?share=${short}`;
+  const shareLink=`https://wata777.f5.si/pixpin/?share=${short}`;
   document.getElementById('shareUrl').innerHTML=
     `<input type="text" value="${shareLink}" readonly><button id="copyBtn">コピー</button>`;
   document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shareLink);
