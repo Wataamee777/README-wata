@@ -1,0 +1,38 @@
+name: Site Status Check
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # 5分ごと
+  workflow_dispatch:        # 手動実行も可
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run status check
+        run: |
+          SITES=("hatoage.wata777.f5.si" "bot.sakurahp.f5.si")
+          STATUS_FILE="status.json"
+          echo "{" > $STATUS_FILE
+          for i in "${!SITES[@]}"; do
+            SITE=${SITES[$i]}
+            NSLOOKUP=$(nslookup $SITE >/dev/null 2>&1 && echo true || echo false)
+            PING=$(ping -c 1 $SITE >/dev/null 2>&1 && echo true || echo false)
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" https://$SITE)
+            TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            echo "  \"$SITE\": {\"nslookup\": $NSLOOKUP, \"ping\": $PING, \"http\": $HTTP, \"checked_at\": \"$TIMESTAMP\"}" >> $STATUS_FILE
+            if [ $i -lt $((${#SITES[@]}-1)) ]; then
+              echo "," >> $STATUS_FILE
+            fi
+          done
+          echo "}" >> $STATUS_FILE
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status.json
+          git commit -m "Update site status"
+          git push
