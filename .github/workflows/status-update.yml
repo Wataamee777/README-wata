@@ -16,7 +16,7 @@ jobs:
 
       - name: Run status check
         run: |
-          SITES=("hatoage.wata777.f5.si" "bot.sakurahp.f5.si")
+          SITES=("hatoage.wata777.f5.si" "bot.sakurahp.f5.si" "sakura.kotoca.net")
           STATUS_FILE="status.json"
           echo "{" > $STATUS_FILE
           for i in "${!SITES[@]}"; do
