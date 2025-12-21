@@ -1,1 +1,5 @@
-{}
+{
+  "hatoage.wata777.f5.si": {"nslookup": true, "ping": false, "http": 200, "checked_at": "2025-12-21T03:34:44Z"}
+,
+  "bot.sakurahp.f5.si": {"nslookup": true, "ping": false, "http": 200, "checked_at": "2025-12-21T03:34:54Z"}
+}
