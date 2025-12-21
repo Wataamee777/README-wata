@@ -23,7 +23,7 @@ jobs:
             SITE=${SITES[$i]}
             NSLOOKUP=$(nslookup $SITE >/dev/null 2>&1 && echo true || echo false)
             PING=$(ping -c 1 $SITE >/dev/null 2>&1 && echo true || echo false)
-            HTTP=$(curl -s -o /dev/null -w -k "%{http_code}" -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" https://$SITE)
+            HTTP=$(curl -s -k -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" https://$SITE)
             TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             echo "  \"$SITE\": {\"nslookup\": $NSLOOKUP, \"ping\": $PING, \"http\": $HTTP, \"checked_at\": \"$TIMESTAMP\"}" >> $STATUS_FILE
             if [ $i -lt $((${#SITES[@]}-1)) ]; then
