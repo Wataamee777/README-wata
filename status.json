@@ -2,19 +2,19 @@
   "hatoage.wata777.f5.si": {
     "nslookup": true,
     "http": 200,
-    "http_ms": 197,
-    "checked_at": "2025-12-24T06:19:17Z"
+    "http_ms": 67,
+    "checked_at": "2025-12-24T06:52:27Z"
   },
   "bot.sakurahp.f5.si": {
     "nslookup": true,
     "http": 200,
-    "http_ms": 165,
-    "checked_at": "2025-12-24T06:19:17Z"
+    "http_ms": 104,
+    "checked_at": "2025-12-24T06:52:27Z"
   },
   "sakura.kotoca.net": {
     "nslookup": true,
     "http": 200,
-    "http_ms": 173,
-    "checked_at": "2025-12-24T06:19:17Z"
+    "http_ms": 112,
+    "checked_at": "2025-12-24T06:52:27Z"
   }
 }
