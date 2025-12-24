@@ -4,16 +4,16 @@
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 109,
-    "checked_at": "2025-12-24T08:17:27Z"
+    "http_ms": 246,
+    "checked_at": "2025-12-24T08:25:01Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 138,
-    "checked_at": "2025-12-24T08:17:28Z"
+    "http_ms": 85,
+    "checked_at": "2025-12-24T08:25:02Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
@@ -25,7 +25,7 @@
 <title>Error</title>
 </head>
 <body>
-<pre>Cannot GET /shards/status/</pre>
+<pre>Internal Server Error</pre>
 </body>
 </html>
   }
