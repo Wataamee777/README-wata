@@ -10,7 +10,7 @@
   --ok: #22c55e;
   --warn: #f59e0b;
   --error: #ef4444;
-  --bg: #0f172a;
+  --bg: #020617;
   --card: #020617;
   --text: #e5e7eb;
   --sub: #94a3b8;
@@ -22,14 +22,13 @@ body {
   margin: 0;
   padding: 20px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #020617;
+  background: var(--bg);
   color: var(--text);
 }
 
 h1 {
   margin-bottom: 16px;
   font-size: 1.6rem;
-  letter-spacing: .04em;
 }
 
 #status {
@@ -43,7 +42,7 @@ h1 {
   padding: 16px;
   border-left: 6px solid;
   box-shadow: 0 8px 24px rgba(0,0,0,.35);
-  animation: fadeIn .3s ease;
+  animation: fadeIn .25s ease;
 }
 
 .ok { border-color: var(--ok); }
@@ -106,37 +105,35 @@ footer {
 </div>
 
 <footer>
-  自動更新: 5分ごと / GitHub Actions + JSON
+  自動更新: 5分ごと / GitHub Actions
 </footer>
 
 <script>
-const statusEl = document.getElementById('status');
+const statusEl = document.getElementById("status");
 
 function classify(http, ms) {
-  if (http !== 200 && http !== 301) return ['error', 'DOWN'];
-  if (ms === null) return ['warn', 'NO RESP'];
-  if (ms > 500) return ['warn', 'SLOW'];
-  return ['ok', 'ONLINE'];
+  if (http !== 200 && http !== 301) return ["error", "DOWN"];
+  if (ms === null) return ["warn", "NO RESP"];
+  if (ms > 500) return ["warn", "SLOW"];
+  return ["ok", "ONLINE"];
 }
 
 async function fetchStatus() {
   try {
-    const res = await fetch('/status.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error('fetch failed');
+    const res = await fetch("./status.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("fetch failed");
 
     const data = await res.json();
-    statusEl.innerHTML = '';
+    statusEl.innerHTML = "";
 
     for (const name in data) {
       const s = data[name];
       const [cls, label] = classify(s.http, s.http_ms);
 
       const speed =
-        s.http_ms === null
-          ? '—'
-          : `${s.http_ms} ms`;
+        s.http_ms === null ? "—" : `${s.http_ms} ms`;
 
-      statusEl.insertAdjacentHTML('beforeend', `
+      statusEl.insertAdjacentHTML("beforeend", `
         <div class="card ${cls}">
           <div class="header">
             <div class="name">${name}</div>
