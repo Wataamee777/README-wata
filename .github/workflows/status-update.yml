@@ -27,49 +27,54 @@ jobs:
           STATUS_FILE="status.json"
           TMP_FILE="status_new.json"
 
-          echo "{" > $TMP_FILE
+          echo "{" > "$TMP_FILE"
 
           for i in "${!SITES[@]}"; do
             SITE="${SITES[$i]}"
 
+            # DNS
             NSLOOKUP=$(nslookup "$SITE" >/dev/null 2>&1 && echo true || echo false)
 
-            PING_MS=$(ping -c 1 -W 1 "$SITE" 2>/dev/null \
-              | grep time= \
-              | sed -E 's/.*time=([0-9.]+).*/\1/' \
-              || echo null)
-
-            HTTP=$(curl -s -m 5 -k -o /dev/null \
-              -w "%{http_code}" \
+            # HTTP status & response time
+            HTTP_INFO=$(curl -s -m 8 -k -o /dev/null \
+              -w "%{http_code} %{time_total}" \
               -A "Mozilla/5.0" \
-              "https://$SITE" || echo 000)
+              "https://$SITE" || echo "000 ")
+
+            HTTP=$(echo "$HTTP_INFO" | awk '{print $1}')
+            TIME_TOTAL=$(echo "$HTTP_INFO" | awk '{print $2}')
+
+            if [ -z "$TIME_TOTAL" ] || [ "$HTTP" = "000" ]; then
+              HTTP_MS=null
+            else
+              HTTP_MS=$(awk "BEGIN { printf \"%.0f\", $TIME_TOTAL * 1000 }")
+            fi
 
             TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-            echo "  \"$SITE\": {" >> $TMP_FILE
-            echo "    \"nslookup\": $NSLOOKUP," >> $TMP_FILE
-            echo "    \"ping_ms\": $PING_MS," >> $TMP_FILE
-            echo "    \"http\": $HTTP," >> $TMP_FILE
-            echo "    \"checked_at\": \"$TIMESTAMP\"" >> $TMP_FILE
-            echo -n "  }" >> $TMP_FILE
+            echo "  \"$SITE\": {" >> "$TMP_FILE"
+            echo "    \"nslookup\": $NSLOOKUP," >> "$TMP_FILE"
+            echo "    \"http\": $HTTP," >> "$TMP_FILE"
+            echo "    \"http_ms\": $HTTP_MS," >> "$TMP_FILE"
+            echo "    \"checked_at\": \"$TIMESTAMP\"" >> "$TMP_FILE"
+            echo -n "  }" >> "$TMP_FILE"
 
             if [ $i -lt $((${#SITES[@]} - 1)) ]; then
-              echo "," >> $TMP_FILE
+              echo "," >> "$TMP_FILE"
             else
-              echo "" >> $TMP_FILE
+              echo "" >> "$TMP_FILE"
             fi
           done
 
-          echo "}" >> $TMP_FILE
+          echo "}" >> "$TMP_FILE"
 
           # 差分がある時だけ更新
           if [ ! -f "$STATUS_FILE" ] || ! diff -q "$STATUS_FILE" "$TMP_FILE" >/dev/null; then
             mv "$TMP_FILE" "$STATUS_FILE"
-            echo "UPDATED=true" >> $GITHUB_ENV
+            echo "UPDATED=true" >> "$GITHUB_ENV"
           else
-            echo "No changes"
             rm "$TMP_FILE"
-            echo "UPDATED=false" >> $GITHUB_ENV
+            echo "UPDATED=false" >> "$GITHUB_ENV"
           fi
 
       - name: Commit and push
