@@ -1,44 +1,83 @@
 name: Site Status Check
+
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5分ごと
-  workflow_dispatch:        # 手動実行も可
-  
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
 permissions:
   contents: write
-  
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run status check
         run: |
-          SITES=("hatoage.wata777.f5.si" "bot.sakurahp.f5.si" "sakura.kotoca.net")
+          SITES=(
+            "hatoage.wata777.f5.si"
+            "bot.sakurahp.f5.si"
+            "sakura.kotoca.net"
+          )
+
           STATUS_FILE="status.json"
-          echo "{" > $STATUS_FILE
+          TMP_FILE="status_new.json"
+
+          echo "{" > $TMP_FILE
+
           for i in "${!SITES[@]}"; do
-            SITE=${SITES[$i]}
-            NSLOOKUP=$(nslookup $SITE >/dev/null 2>&1 && echo true || echo false)
-            PING=$(ping -c 1 $SITE >/dev/null 2>&1 && echo true || echo false)
-            HTTP=$(curl -s -k -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" https://$SITE)
+            SITE="${SITES[$i]}"
+
+            NSLOOKUP=$(nslookup "$SITE" >/dev/null 2>&1 && echo true || echo false)
+
+            PING_MS=$(ping -c 1 -W 1 "$SITE" 2>/dev/null \
+              | grep time= \
+              | sed -E 's/.*time=([0-9.]+).*/\1/' \
+              || echo null)
+
+            HTTP=$(curl -s -m 5 -k -o /dev/null \
+              -w "%{http_code}" \
+              -A "Mozilla/5.0" \
+              "https://$SITE" || echo 000)
+
             TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            echo "  \"$SITE\": {\"nslookup\": $NSLOOKUP, \"ping\": $PING, \"http\": $HTTP, \"checked_at\": \"$TIMESTAMP\"}" >> $STATUS_FILE
-            if [ $i -lt $((${#SITES[@]}-1)) ]; then
-              echo "," >> $STATUS_FILE
+
+            echo "  \"$SITE\": {" >> $TMP_FILE
+            echo "    \"nslookup\": $NSLOOKUP," >> $TMP_FILE
+            echo "    \"ping_ms\": $PING_MS," >> $TMP_FILE
+            echo "    \"http\": $HTTP," >> $TMP_FILE
+            echo "    \"checked_at\": \"$TIMESTAMP\"" >> $TMP_FILE
+            echo -n "  }" >> $TMP_FILE
+
+            if [ $i -lt $((${#SITES[@]} - 1)) ]; then
+              echo "," >> $TMP_FILE
+            else
+              echo "" >> $TMP_FILE
             fi
           done
-          echo "}" >> $STATUS_FILE
+
+          echo "}" >> $TMP_FILE
+
+          # 差分がある時だけ更新
+          if [ ! -f "$STATUS_FILE" ] || ! diff -q "$STATUS_FILE" "$TMP_FILE" >/dev/null; then
+            mv "$TMP_FILE" "$STATUS_FILE"
+            echo "UPDATED=true" >> $GITHUB_ENV
+          else
+            echo "No changes"
+            rm "$TMP_FILE"
+            echo "UPDATED=false" >> $GITHUB_ENV
+          fi
 
       - name: Commit and push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: env.UPDATED == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add status.json
-          git commit -m "Update site status"
-          git pull --rebase origin main
+          git commit -m "chore: update site status"
+          git pull --rebase
           git push
