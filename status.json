@@ -1,20 +1,32 @@
 {
   "hatoage.wata777.f5.si": {
+    "type": "site",
+    "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 143,
-    "checked_at": "2025-12-24T07:56:14Z"
-  },
-  "bot.sakurahp.f5.si": {
-    "nslookup": true,
-    "http": 200,
-    "http_ms": 98,
-    "checked_at": "2025-12-24T07:56:14Z"
+    "http_ms": 109,
+    "checked_at": "2025-12-24T08:17:27Z"
   },
   "sakura.kotoca.net": {
+    "type": "site",
+    "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 198,
-    "checked_at": "2025-12-24T07:56:15Z"
+    "http_ms": 138,
+    "checked_at": "2025-12-24T08:17:28Z"
+  },
+  "bot.sakurahp.f5.si": {
+    "type": "discord_bot",
+    "status": "down",
+    "raw": <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot GET /shards/status/</pre>
+</body>
+</html>
   }
 }
