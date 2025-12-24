@@ -2,46 +2,162 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>さくらbot&はとあげステータス</title>
+<title>さくらbot & はとあげ ステータス</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-  body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-  h1 { color: #333; }
-  .site { margin-bottom: 10px; padding: 10px; border-radius: 5px; }
-  .ok { background: #d4edda; color: #155724; }
-  .warn { background: #fff3cd; color: #856404; }
-  .error { background: #f8d7da; color: #721c24; }
+:root {
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --error: #ef4444;
+  --bg: #0f172a;
+  --card: #020617;
+  --text: #e5e7eb;
+  --sub: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #020617, #020617);
+  color: var(--text);
+}
+
+h1 {
+  margin-bottom: 16px;
+  font-size: 1.6rem;
+  letter-spacing: .04em;
+}
+
+#status {
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  border-left: 6px solid;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  animation: fadeIn .3s ease;
+}
+
+.ok { border-color: var(--ok); }
+.warn { border-color: var(--warn); }
+.error { border-color: var(--error); }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.ok .badge { background: #14532d; color: #86efac; }
+.warn .badge { background: #78350f; color: #fde68a; }
+.error .badge { background: #7f1d1d; color: #fecaca; }
+
+.meta {
+  font-size: .85rem;
+  color: var(--sub);
+  line-height: 1.6;
+}
+
+.loading {
+  opacity: .6;
+  font-size: .9rem;
+}
+
+footer {
+  margin-top: 20px;
+  font-size: .75rem;
+  color: var(--sub);
+  opacity: .7;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 </style>
 </head>
+
 <body>
-<h1>サイトステータス</h1>
-<div id="status"></div>
+<h1>📡 サービスステータス</h1>
+
+<div id="status">
+  <div class="loading">チェック中…</div>
+</div>
+
+<footer>
+  自動更新: 5分ごと / JSONベース監視
+</footer>
 
 <script>
+const statusEl = document.getElementById('status');
+
+function classify(http) {
+  if (http === 200 || http === 301) return ['ok', 'ONLINE'];
+  if (http === 401) return ['warn', 'AUTH'];
+  return ['error', 'DOWN'];
+}
+
 async function fetchStatus() {
   try {
-    const res = await fetch('/status.json');
-    const data = await res.json();
-    const container = document.getElementById('status');
-    container.innerHTML = '';
+    const res = await fetch('/status.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('fetch failed');
 
-    for (const site in data) {
-      const s = data[site];
-      let cls = (s.http === 200 || s.http === 301) ? 'ok' :
-                (s.http === 401) ? 'warn' : 'error';
-      container.innerHTML += `<div class="site ${cls}">
-        <strong>${site}</strong><br>
-        NS: ${s.nslookup} | Ping: ${s.ping} | HTTP: ${s.http}<br>
-        Last checked: ${new Date(s.checked_at).toLocaleString()}
-      </div>`;
+    const data = await res.json();
+    statusEl.innerHTML = '';
+
+    for (const name in data) {
+      const s = data[name];
+      const [cls, label] = classify(s.http);
+
+      statusEl.insertAdjacentHTML('beforeend', `
+        <div class="card ${cls}">
+          <div class="header">
+            <div class="name">${name}</div>
+            <div class="badge">${label}</div>
+          </div>
+          <div class="meta">
+            NS Lookup: ${s.nslookup}<br>
+            Ping: ${s.ping} ms<br>
+            HTTP: ${s.http}<br>
+            Last Check: ${new Date(s.checked_at).toLocaleString()}
+          </div>
+        </div>
+      `);
     }
   } catch (e) {
-    document.getElementById('status').innerHTML = 'ステータス取得エラー';
+    statusEl.innerHTML = `
+      <div class="card error">
+        <div class="name">ステータス取得失敗</div>
+        <div class="meta">JSONが取得できませんでした</div>
+      </div>
+    `;
     console.error(e);
   }
 }
 
 fetchStatus();
-setInterval(fetchStatus, 300000); // 5分ごと自動更新
+setInterval(fetchStatus, 300000);
 </script>
 </body>
 </html>
