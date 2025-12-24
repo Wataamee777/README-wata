@@ -20,22 +20,22 @@ jobs:
         run: |
           SITES=(
             "hatoage.wata777.f5.si"
-            "bot.sakurahp.f5.si"
             "sakura.kotoca.net"
           )
+
+          BOT_SITE="bot.sakurahp.f5.si"
 
           STATUS_FILE="status.json"
           TMP_FILE="status_new.json"
 
           echo "{" > "$TMP_FILE"
 
+          # ===== 通常サイト =====
           for i in "${!SITES[@]}"; do
             SITE="${SITES[$i]}"
 
-            # DNS
             NSLOOKUP=$(nslookup "$SITE" >/dev/null 2>&1 && echo true || echo false)
 
-            # HTTP status & response time
             HTTP_INFO=$(curl -s -m 8 -k -o /dev/null \
               -w "%{http_code} %{time_total}" \
               -A "Mozilla/5.0" \
@@ -44,27 +44,49 @@ jobs:
             HTTP=$(echo "$HTTP_INFO" | awk '{print $1}')
             TIME_TOTAL=$(echo "$HTTP_INFO" | awk '{print $2}')
 
-            if [ -z "$TIME_TOTAL" ] || [ "$HTTP" = "000" ]; then
+            if [ "$HTTP" = "000" ] || [ -z "$TIME_TOTAL" ]; then
               HTTP_MS=null
             else
               HTTP_MS=$(awk "BEGIN { printf \"%.0f\", $TIME_TOTAL * 1000 }")
             fi
 
+            if [ "$NSLOOKUP" = "false" ]; then
+              STATUS="dns_error"
+            elif [ "$HTTP" -ge 500 ] || [ "$HTTP" = "000" ]; then
+              STATUS="down"
+            elif [ "$HTTP" -ge 400 ]; then
+              STATUS="warning"
+            else
+              STATUS="ok"
+            fi
+
             TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
             echo "  \"$SITE\": {" >> "$TMP_FILE"
+            echo "    \"type\": \"site\"," >> "$TMP_FILE"
+            echo "    \"status\": \"$STATUS\"," >> "$TMP_FILE"
             echo "    \"nslookup\": $NSLOOKUP," >> "$TMP_FILE"
             echo "    \"http\": $HTTP," >> "$TMP_FILE"
             echo "    \"http_ms\": $HTTP_MS," >> "$TMP_FILE"
             echo "    \"checked_at\": \"$TIMESTAMP\"" >> "$TMP_FILE"
-            echo -n "  }" >> "$TMP_FILE"
-
-            if [ $i -lt $((${#SITES[@]} - 1)) ]; then
-              echo "," >> "$TMP_FILE"
-            else
-              echo "" >> "$TMP_FILE"
-            fi
+            echo -n "  }," >> "$TMP_FILE"
+            echo "" >> "$TMP_FILE"
           done
+
+          # ===== Discord Bot（Shard）=====
+          BOT_JSON=$(curl -s -m 8 "https://$BOT_SITE/shards/status/" || echo "")
+
+          if echo "$BOT_JSON" | grep -q '"ok":true'; then
+            SHARD_STATUS="ok"
+          else
+            SHARD_STATUS="down"
+          fi
+
+          echo "  \"$BOT_SITE\": {" >> "$TMP_FILE"
+          echo "    \"type\": \"discord_bot\"," >> "$TMP_FILE"
+          echo "    \"status\": \"$SHARD_STATUS\"," >> "$TMP_FILE"
+          echo "    \"raw\": $BOT_JSON" >> "$TMP_FILE"
+          echo "  }" >> "$TMP_FILE"
 
           echo "}" >> "$TMP_FILE"
 
@@ -83,6 +105,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add status.json
-          git commit -m "chore: update site status"
+          git commit -m "chore: update site & shard status"
           git pull --rebase
           git push
