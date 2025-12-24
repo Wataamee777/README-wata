@@ -22,7 +22,7 @@ body {
   margin: 0;
   padding: 20px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(180deg, #020617, #020617);
+  background: #020617;
   color: var(--text);
 }
 
@@ -106,16 +106,17 @@ footer {
 </div>
 
 <footer>
-  自動更新: 5分ごと / JSONベース監視
+  自動更新: 5分ごと / GitHub Actions + JSON
 </footer>
 
 <script>
 const statusEl = document.getElementById('status');
 
-function classify(http) {
-  if (http === 200 || http === 301) return ['ok', 'ONLINE'];
-  if (http === 401) return ['warn', 'AUTH'];
-  return ['error', 'DOWN'];
+function classify(http, ms) {
+  if (http !== 200 && http !== 301) return ['error', 'DOWN'];
+  if (ms === null) return ['warn', 'NO RESP'];
+  if (ms > 500) return ['warn', 'SLOW'];
+  return ['ok', 'ONLINE'];
 }
 
 async function fetchStatus() {
@@ -128,7 +129,12 @@ async function fetchStatus() {
 
     for (const name in data) {
       const s = data[name];
-      const [cls, label] = classify(s.http);
+      const [cls, label] = classify(s.http, s.http_ms);
+
+      const speed =
+        s.http_ms === null
+          ? '—'
+          : `${s.http_ms} ms`;
 
       statusEl.insertAdjacentHTML('beforeend', `
         <div class="card ${cls}">
@@ -137,9 +143,9 @@ async function fetchStatus() {
             <div class="badge">${label}</div>
           </div>
           <div class="meta">
-            NS Lookup: ${s.nslookup}<br>
-            Ping: ${s.ping} ms<br>
+            DNS: ${s.nslookup}<br>
             HTTP: ${s.http}<br>
+            Response: ${speed}<br>
             Last Check: ${new Date(s.checked_at).toLocaleString()}
           </div>
         </div>
@@ -149,7 +155,7 @@ async function fetchStatus() {
     statusEl.innerHTML = `
       <div class="card error">
         <div class="name">ステータス取得失敗</div>
-        <div class="meta">JSONが取得できませんでした</div>
+        <div class="meta">status.json を取得できませんでした</div>
       </div>
     `;
     console.error(e);
