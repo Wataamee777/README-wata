@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>IP情報チェッカー</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+  h1 { color: #333; }
+  input, select, button { padding: 5px; margin: 5px 0; }
+  #result { margin-top: 20px; padding: 10px; background: #fff; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<h1>IP情報チェッカー</h1>
+
+<label>テンプレIP: 
+  <select id="templateSelect" onchange="useTemplate()">
+    <option value="">選択しない</option>
+
+    <optgroup label="Google">
+      <option value="8.8.8.8">IPV4 DNS優先(8.8.8.8)</option>
+      <option value="8.8.4.4">IPV4 DNS代替(8.8.4.4)</option>
+      <option value="2001:4860:4860::8888">IPV6 DNS優先(2001:4860:4860::8888)</option>
+      <option value="2001:4860:4860::8844">IPV6 DNS代替(2001:4860:4860::8844)</option>
+    </optgroup>
+
+    <optgroup label="Cloudflare">
+      <option value="1.1.1.1">IPV4 DNS優先(1.1.1.1)</option>
+      <option value="1.0.0.1">IPV4 DNS代替(1.0.0.1)</option>
+      <option value="2606:4700:4700::1111">IPV6 DNS優先(2606:4700:4700::1111)</option>
+      <option value="2606:4700:4700::1001">IPV6 DNS代替(2606:4700:4700::1001)</option>
+    </optgroup>
+
+    <optgroup label="GitHub">
+      <option value="185.199.108.153">IPV4 Github Pages(185.199.108.153)</option>
+      <option value="2606:50c0:8000::153">IPV4 Github Pages(2606:50c0:8000::153)</option>
+    </optgroup>
+
+    <optgroup label="example.com">
+      <option value="104.18.26.120">IPV4優先(104.18.26.120)</option>
+      <option value="104.18.27.120">IPV4代替(104.18.27.120)</option>
+      <option value="2606:4700::6812:1a78">IPV6優先(2606:4700::6812:1a78)</option>
+      <option value="2606:4700::6812:1b78">IPV6代替(2606:4700::6812:1b78)</option>
+    </optgroup>
+
+  </select>
+</label><br>
+
+<label>IPアドレス: <input type="text" id="ipInput" placeholder="空欄で自分のIP"></label>
+<button onclick="useMyIP()">自分のIPを取得</button><br>
+
+<label>タイプ: 
+  <select id="typeSelect">
+    <option value="v4">IPv4</option>
+    <option value="v6">IPv6</option>
+  </select>
+</label><br>
+
+<button onclick="checkIP()">確認</button>
+
+<div id="result">結果がここに表示されます</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const ipParam = params.get('ip');
+const typeParam = params.get('type') === 'v6' ? 'v6' : 'v4';
+
+document.getElementById('ipInput').value = ipParam || '';
+document.getElementById('typeSelect').value = typeParam;
+
+async function fetchIP(ip) {
+  let url = ip ? `https://ipinfo.io/${ip}/json` : 'https://ipinfo.io/json';
+  const res = await fetch(url);
+  return await res.json();
+}
+
+async function checkIP() {
+  let ip = document.getElementById('ipInput').value.trim();
+  const type = document.getElementById('typeSelect').value;
+
+  try {
+    const data = await fetchIP(ip);
+    document.getElementById('result').innerHTML = `
+      <p>IP: ${data.ip}</p>
+      <p>ISP: ${data.org || '不明'}</p>
+      <p>国: ${data.country || '不明'}</p>
+      <p>地域: ${data.region || '不明'}</p>
+      <p>都市: ${data.city || '不明'}</p>
+      <p>タイプ: IPv${type === 'v6' ? 6 : 4}</p>
+    `;
+  } catch(e) {
+    document.getElementById('result').innerText = "情報取得に失敗しました";
+  }
+}
+
+async function useMyIP() {
+  try {
+    const data = await fetchIP();
+    document.getElementById('ipInput').value = data.ip;
+    checkIP();
+  } catch(e) {
+    alert("自分のIPを取得できませんでした");
+  }
+}
+
+function useTemplate() {
+  const ip = document.getElementById('templateSelect').value;
+  if(ip) {
+    document.getElementById('ipInput').value = ip;
+    document.getElementById('typeSelect').value = ip.includes(':') ? 'v6' : 'v4';
+    checkIP();
+  }
+}
+
+if(ipParam) checkIP();
+</script>
+</body>
+</html>
