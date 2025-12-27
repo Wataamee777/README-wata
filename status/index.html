@@ -37,7 +37,7 @@ function escape(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'
 async function fetchStatus() {
   try {
     // キャッシュを避けるためにタイムスタンプを付与
-    const res = await fetch("./status.json?t=" + Date.now(), { cache: "no-store" });
+    const res = await fetch("/status.json?t=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("HTTPエラー: " + res.status);
     
     const data = await res.json();
