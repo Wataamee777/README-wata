@@ -4,20 +4,39 @@
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 263,
-    "checked_at": "2025-12-27T08:03:46Z"
+    "http_ms": 134,
+    "checked_at": "2025-12-27T08:29:33Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 109,
-    "checked_at": "2025-12-27T08:03:46Z"
+    "http_ms": 64,
+    "checked_at": "2025-12-27T08:29:33Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
-    "status": "down",
-    "raw": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>Service Suspended</title>\n</head>\n<body>\nThis service has been suspended by its owner.\n</body>\n</html>\n"
+    "status": "ok",
+    "raw": {
+      "ok": true,
+      "updatedAt": "57958/6/7 5:29:34",
+      "shards": [
+        {
+          "shardId": 0,
+          "ready": true,
+          "ping": 91,
+          "guilds": 0,
+          "uptime": 547218
+        },
+        {
+          "shardId": 1,
+          "ready": true,
+          "ping": 91,
+          "guilds": 1,
+          "uptime": 540009
+        }
+      ]
+    }
   }
 }
