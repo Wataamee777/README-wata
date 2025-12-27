@@ -22,83 +22,78 @@ jobs:
             "hatoage.wata777.f5.si"
             "sakura.kotoca.net"
           )
-
           BOT_SITE="bot.sakurahp.f5.si"
-
           STATUS_FILE="status.json"
-          TMP_FILE="status_new.json"
+          
+          # 中間データを保存する一時ファイル
+          echo "{}" > temp_data.json
 
-          echo "{" > "$TMP_FILE"
-
-          # ===== 通常サイト =====
-          for i in "${!SITES[@]}"; do
-            SITE="${SITES[$i]}"
-
+          # ===== 通常サイトのチェック =====
+          for SITE in "${SITES[@]}"; do
             NSLOOKUP=$(nslookup "$SITE" >/dev/null 2>&1 && echo true || echo false)
-
+            
             HTTP_INFO=$(curl -s -m 8 -k -o /dev/null \
               -w "%{http_code} %{time_total}" \
               -A "Mozilla/5.0" \
-              "https://$SITE" || echo "000 ")
+              "https://$SITE" || echo "000 0")
 
             HTTP=$(echo "$HTTP_INFO" | awk '{print $1}')
             TIME_TOTAL=$(echo "$HTTP_INFO" | awk '{print $2}')
-
-            if [ "$HTTP" = "000" ] || [ -z "$TIME_TOTAL" ]; then
-              HTTP_MS=null
+            
+            # ミリ秒計算（000の場合はnull）
+            if [ "$HTTP" = "000" ]; then
+              HTTP_MS="null"
             else
               HTTP_MS=$(awk "BEGIN { printf \"%.0f\", $TIME_TOTAL * 1000 }")
             fi
 
-            if [ "$NSLOOKUP" = "false" ]; then
-              STATUS="dns_error"
-            elif [ "$HTTP" -ge 500 ] || [ "$HTTP" = "000" ]; then
-              STATUS="down"
-            elif [ "$HTTP" -ge 400 ]; then
-              STATUS="warning"
-            else
-              STATUS="ok"
-            fi
+            # ステータス判定
+            if [ "$NSLOOKUP" = "false" ]; then STATUS="dns_error"
+            elif [ "$HTTP" -ge 500 ] || [ "$HTTP" = "000" ]; then STATUS="down"
+            elif [ "$HTTP" -ge 400 ]; then STATUS="warning"
+            else STATUS="ok"; fi
 
             TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-            echo "  \"$SITE\": {" >> "$TMP_FILE"
-            echo "    \"type\": \"site\"," >> "$TMP_FILE"
-            echo "    \"status\": \"$STATUS\"," >> "$TMP_FILE"
-            echo "    \"nslookup\": $NSLOOKUP," >> "$TMP_FILE"
-            echo "    \"http\": $HTTP," >> "$TMP_FILE"
-            echo "    \"http_ms\": $HTTP_MS," >> "$TMP_FILE"
-            echo "    \"checked_at\": \"$TIMESTAMP\"" >> "$TMP_FILE"
-            echo -n "  }," >> "$TMP_FILE"
-            echo "" >> "$TMP_FILE"
+            # jqでサイト情報を追加
+            jq --arg site "$SITE" \
+               --arg status "$STATUS" \
+               --argjson nslookup "$NSLOOKUP" \
+               --argjson http "$HTTP" \
+               --argjson http_ms "$HTTP_MS" \
+               --arg checked_at "$TIMESTAMP" \
+               '. + {($site): {type: "site", status: $status, nslookup: $nslookup, http: $http, http_ms: $http_ms, checked_at: $checked_at}}' \
+               temp_data.json > temp_data_new.json && mv temp_data_new.json temp_data.json
           done
 
-          # ===== Discord Bot（Shard）=====
-          BOT_JSON=$(curl -s -m 8 "https://$BOT_SITE/shards/status/" || echo "")
-
-          if echo "$BOT_JSON" | grep -q '"ok":true'; then
+          # ===== Discord Bot（Shard）のチェック =====
+          BOT_RAW=$(curl -s -m 8 "https://$BOT_SITE/shards/status/" || echo "timeout")
+          
+          # HTMLが返ってきても壊れないように jq で安全に処理
+          # 有効なJSONならそのまま、そうでなければ文字列として扱う
+          SAFE_RAW=$(echo "$BOT_RAW" | jq -e . 2>/dev/null || echo "$BOT_RAW" | jq -Rs .)
+          
+          # ステータス判定（JSON内のokプロパティを確認）
+          if echo "$SAFE_RAW" | jq -e '.ok == true' >/dev/null 2>&1; then
             SHARD_STATUS="ok"
           else
             SHARD_STATUS="down"
           fi
 
-          echo "  \"$BOT_SITE\": {" >> "$TMP_FILE"
-          echo "    \"type\": \"discord_bot\"," >> "$TMP_FILE"
-          echo "    \"status\": \"$SHARD_STATUS\"," >> "$TMP_FILE"
-          echo "    \"raw\": $BOT_JSON" >> "$TMP_FILE"
-          echo "  }" >> "$TMP_FILE"
+          # 最終的なJSONを書き出し
+          jq --arg bot_site "$BOT_SITE" \
+             --arg status "$SHARD_STATUS" \
+             --argjson raw "$SAFE_RAW" \
+             '. + {($bot_site): {type: "discord_bot", status: $status, raw: $raw}}' \
+             temp_data.json > "$STATUS_FILE"
 
-          echo "}" >> "$TMP_FILE"
-
-          # 差分がある時だけ更新
-          if [ ! -f "$STATUS_FILE" ] || ! diff -q "$STATUS_FILE" "$TMP_FILE" >/dev/null; then
-            mv "$TMP_FILE" "$STATUS_FILE"
-            echo "UPDATED=true" >> "$GITHUB_ENV"
-          else
-            rm "$TMP_FILE"
+          # 差分チェック
+          if git diff --exit-code "$STATUS_FILE" >/dev/null; then
             echo "UPDATED=false" >> "$GITHUB_ENV"
+          else
+            echo "UPDATED=true" >> "$GITHUB_ENV"
           fi
-
+          
       - name: Commit and push
         if: env.UPDATED == 'true'
         run: |
