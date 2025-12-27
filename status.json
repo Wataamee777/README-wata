@@ -4,30 +4,20 @@
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 130,
-    "checked_at": "2025-12-27T07:58:27Z"
+    "http_ms": 263,
+    "checked_at": "2025-12-27T08:03:46Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 38,
-    "checked_at": "2025-12-27T07:58:27Z"
+    "http_ms": 109,
+    "checked_at": "2025-12-27T08:03:46Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
     "status": "down",
-    "raw": <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Service Suspended</title>
-</head>
-<body>
-This service has been suspended by its owner.
-</body>
-</html>
+    "raw": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>Service Suspended</title>\n</head>\n<body>\nThis service has been suspended by its owner.\n</body>\n</html>\n"
   }
 }
