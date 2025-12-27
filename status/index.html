@@ -61,7 +61,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .name {
@@ -87,13 +87,13 @@ h1 {
   color: var(--sub);
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 12px;
+  gap: 6px 16px;
 }
 
 .meta-label { font-weight: 500; opacity: 0.8; }
 
 footer {
-  margin-top: 30px;
+  margin-top: 40px;
   text-align: center;
   font-size: .75rem;
   color: var(--sub);
@@ -130,15 +130,11 @@ function escape(str) {
 
 // 状態判定ロジック
 function classify(item) {
-  if (item.type === "site") {
-    if (item.http !== 200 && item.http !== 301) return ["error", "DOWN"];
-    if (item.http_ms === null) return ["warn", "NO RESP"];
-    if (item.http_ms > 500) return ["warn", "SLOW"];
-    return ["ok", "ONLINE"];
-  } else if (item.type === "discord_bot") {
-    return (item.raw && item.raw.ok) ? ["ok", "ONLINE"] : ["error", "OFFLINE"];
-  }
-  return ["warn", "UNKNOWN"];
+  // すでにJSON側で status を計算済みなのでそれを利用
+  if (item.status === "ok") return ["ok", "ONLINE"];
+  if (item.status === "warning") return ["warn", "WARNING"];
+  if (item.status === "dns_error") return ["error", "DNS ERROR"];
+  return ["error", "DOWN"];
 }
 
 async function fetchStatus() {
@@ -157,20 +153,30 @@ async function fetchStatus() {
       if (item.type === "site") {
         const time = item.checked_at ? new Date(item.checked_at).toLocaleString() : "不明";
         contentHtml = `
-          <div class="meta-label">HTTP</div><div>${item.http}</div>
+          <div class="meta-label">HTTP</div><div>${item.http || "—"}</div>
           <div class="meta-label">Response</div><div>${item.http_ms ?? "—"} ms</div>
           <div class="meta-label">DNS</div><div>${item.nslookup ? "OK" : "NG"}</div>
           <div class="meta-label">Updated</div><div>${escape(time)}</div>
         `;
       } else if (item.type === "discord_bot") {
-        const shards = item.raw?.shards || [];
+        // raw がオブジェクト（正常なJSON）かチェック
+        const isObject = item.raw && typeof item.raw === 'object' && !Array.isArray(item.raw);
+        const shards = isObject ? (item.raw.shards || []) : [];
+        
+        // メッセージの出し分け（HTMLが混じった時への対策）
+        const lastUpdate = isObject 
+          ? (item.raw.updatedAt || "不明") 
+          : "サービス停止中 (HTML応答)";
+
         const avgPing = shards.length > 0 
           ? Math.round(shards.reduce((a, b) => a + b.ping, 0) / shards.length) 
           : "—";
+
         contentHtml = `
+          <div class="meta-label">Status</div><div>${isObject ? "Active" : "Suspended"}</div>
           <div class="meta-label">Shards</div><div>${shards.length} Active</div>
           <div class="meta-label">Avg Ping</div><div>${avgPing} ms</div>
-          <div class="meta-label">Updated</div><div>${escape(item.raw?.updatedAt)}</div>
+          <div class="meta-label">Updated</div><div>${escape(lastUpdate)}</div>
         `;
       }
 
@@ -190,7 +196,10 @@ async function fetchStatus() {
     statusListEl.innerHTML = `
       <div class="card error">
         <div class="name">エラー</div>
-        <div class="meta">データの取得に失敗しました</div>
+        <div class="meta">
+          <div class="meta-label">状況</div><div>データの読み取りに失敗しました</div>
+          <div class="meta-label">原因</div><div>status.json が見つからないか、壊れています</div>
+        </div>
       </div>
     `;
     console.error(e);
