@@ -2,16 +2,15 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>さくらbot & はとあげ ステータス</title>
+<title>サービスステータス</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 :root {
   --ok: #22c55e;
   --warn: #f59e0b;
   --error: #ef4444;
   --bg: #020617;
-  --card: #020617;
+  --card: #0f172a;
   --text: #e5e7eb;
   --sub: #94a3b8;
 }
@@ -21,28 +20,37 @@
 body {
   margin: 0;
   padding: 20px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 h1 {
-  margin-bottom: 16px;
-  font-size: 1.6rem;
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-#status {
+#status-list {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .card {
   background: var(--card);
   border-radius: 12px;
-  padding: 16px;
+  padding: 18px;
   border-left: 6px solid;
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
-  animation: fadeIn .25s ease;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+  animation: fadeIn .3s ease-out;
 }
 
 .ok { border-color: var(--ok); }
@@ -53,19 +61,21 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .name {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
+  word-break: break-all;
 }
 
 .badge {
   padding: 2px 10px;
   border-radius: 999px;
   font-size: .75rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .ok .badge { background: #14532d; color: #86efac; }
@@ -73,92 +83,121 @@ h1 {
 .error .badge { background: #7f1d1d; color: #fecaca; }
 
 .meta {
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--sub);
-  line-height: 1.6;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
 }
 
-.loading {
-  opacity: .6;
-  font-size: .9rem;
-}
+.meta-label { font-weight: 500; opacity: 0.8; }
 
 footer {
-  margin-top: 20px;
+  margin-top: 30px;
+  text-align: center;
   font-size: .75rem;
   color: var(--sub);
-  opacity: .7;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
 </head>
 
 <body>
-<h1>📡 サービスステータス</h1>
-
-<div id="status">
-  <div class="loading">チェック中…</div>
+<div class="container">
+  <h1>📡 サービスステータス</h1>
+  <div id="status-list">
+    <div style="color: var(--sub)">読み込み中…</div>
+  </div>
+  <footer>
+    自動更新: 5分ごと / GitHub Actions
+  </footer>
 </div>
 
-<footer>
-  自動更新: 5分ごと / GitHub Actions
-</footer>
-
 <script>
-const statusEl = document.getElementById("status");
+const statusListEl = document.getElementById("status-list");
 
-function classify(http, ms) {
-  if (http !== 200 && http !== 301) return ["error", "DOWN"];
-  if (ms === null) return ["warn", "NO RESP"];
-  if (ms > 500) return ["warn", "SLOW"];
-  return ["ok", "ONLINE"];
+// XSS対策：テキストを安全にエスケープ
+function escape(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[m]));
+}
+
+// 状態判定ロジック
+function classify(item) {
+  if (item.type === "site") {
+    if (item.http !== 200 && item.http !== 301) return ["error", "DOWN"];
+    if (item.http_ms === null) return ["warn", "NO RESP"];
+    if (item.http_ms > 500) return ["warn", "SLOW"];
+    return ["ok", "ONLINE"];
+  } else if (item.type === "discord_bot") {
+    return (item.raw && item.raw.ok) ? ["ok", "ONLINE"] : ["error", "OFFLINE"];
+  }
+  return ["warn", "UNKNOWN"];
 }
 
 async function fetchStatus() {
   try {
     const res = await fetch("./status.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("fetch failed");
-
+    if (!res.ok) throw new Error("Fetch failed");
     const data = await res.json();
-    statusEl.innerHTML = "";
+    
+    statusListEl.innerHTML = "";
 
     for (const name in data) {
-      const s = data[name];
-      const [cls, label] = classify(s.http, s.http_ms);
+      const item = data[name];
+      const [cls, label] = classify(item);
+      let contentHtml = "";
 
-      const speed =
-        s.http_ms === null ? "—" : `${s.http_ms} ms`;
+      if (item.type === "site") {
+        const time = item.checked_at ? new Date(item.checked_at).toLocaleString() : "不明";
+        contentHtml = `
+          <div class="meta-label">HTTP</div><div>${item.http}</div>
+          <div class="meta-label">Response</div><div>${item.http_ms ?? "—"} ms</div>
+          <div class="meta-label">DNS</div><div>${item.nslookup ? "OK" : "NG"}</div>
+          <div class="meta-label">Updated</div><div>${escape(time)}</div>
+        `;
+      } else if (item.type === "discord_bot") {
+        const shards = item.raw?.shards || [];
+        const avgPing = shards.length > 0 
+          ? Math.round(shards.reduce((a, b) => a + b.ping, 0) / shards.length) 
+          : "—";
+        contentHtml = `
+          <div class="meta-label">Shards</div><div>${shards.length} Active</div>
+          <div class="meta-label">Avg Ping</div><div>${avgPing} ms</div>
+          <div class="meta-label">Updated</div><div>${escape(item.raw?.updatedAt)}</div>
+        `;
+      }
 
-      statusEl.insertAdjacentHTML("beforeend", `
+      statusListEl.insertAdjacentHTML("beforeend", `
         <div class="card ${cls}">
           <div class="header">
-            <div class="name">${name}</div>
+            <div class="name">${escape(name)}</div>
             <div class="badge">${label}</div>
           </div>
           <div class="meta">
-            DNS: ${s.nslookup}<br>
-            HTTP: ${s.http}<br>
-            Response: ${speed}<br>
-            Last Check: ${new Date(s.checked_at).toLocaleString()}
+            ${contentHtml}
           </div>
         </div>
       `);
     }
   } catch (e) {
-    statusEl.innerHTML = `
+    statusListEl.innerHTML = `
       <div class="card error">
-        <div class="name">ステータス取得失敗</div>
-        <div class="meta">status.json を取得できませんでした</div>
+        <div class="name">エラー</div>
+        <div class="meta">データの取得に失敗しました</div>
       </div>
     `;
     console.error(e);
   }
 }
 
+// 初回実行と定期実行（5分ごと）
 fetchStatus();
 setInterval(fetchStatus, 300000);
 </script>
