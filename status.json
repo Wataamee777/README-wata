@@ -1,40 +1,40 @@
 {
   "hatoage.wata777.f5.si": {
     "type": "site",
-    "status": "down",
+    "status": "ok",
     "nslookup": true,
-    "http": 0,
-    "http_ms": null,
-    "checked_at": "2026-01-06T08:49:19Z"
+    "http": 200,
+    "http_ms": 283,
+    "checked_at": "2026-01-06T09:13:48Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 113,
-    "checked_at": "2026-01-06T08:49:20Z"
+    "http_ms": 40,
+    "checked_at": "2026-01-06T09:13:48Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
     "status": "ok",
     "raw": {
       "ok": true,
-      "updatedAt": "2026/1/6 17:48:55",
+      "updatedAt": "2026/1/6 18:13:12",
       "shards": [
         {
           "shardId": 0,
           "ready": true,
-          "ping": 93,
+          "ping": 95,
           "guilds": 0,
-          "uptime": 14408636
+          "uptime": 367967
         },
         {
           "shardId": 1,
           "ready": true,
-          "ping": 91,
+          "ping": 92,
           "guilds": 1,
-          "uptime": 14400526
+          "uptime": 360014
         }
       ]
     }
