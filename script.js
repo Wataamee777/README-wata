@@ -13,7 +13,7 @@ Join the discord server!
 --------------------------------------------------
 To send an invitation link, use %cjoin()%c
 --------------------------------------------------`,
-  "color: #5865F2; font-family: keifont; font-weight: bold; line-height: 1.2;", 
+  "color: #5865F2; font-family: monospace; font-weight: bold; line-height: 1.2;", 
   "color: #888; font-family: monospace;",
   "color: #fff; background: #5865F2; padding: 2px 4px; border-radius: 3px; font-weight: bold;", 
   "color: #888; background: transparent;"
@@ -21,7 +21,7 @@ To send an invitation link, use %cjoin()%c
 
 // 2. join() コマンドの実装
 window.join = () => {
-  const discordUrl = "discord.gg"; 
+  const discordUrl = "https://discord.gg/sakuraza-tan-wang-guo-sakura-talk-kingdom-1208962938388484107"; 
   console.log("%c🚀 Opening Discord invitation...", "color: #57F287; font-weight: bold;");
   
   setTimeout(() => {
