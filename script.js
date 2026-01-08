@@ -1,4 +1,35 @@
 document.addEventListener("DOMContentLoaded", async () => {
+// 1. AAとメッセージの表示
+console.log(
+  `%c
+     _   ___   ___  _   _     _   _   ___  __        __
+    | | / _ \ |_ _|| \ | |   | \ | | / _ \ \ \      / /
+ _  | || | | | | | |  \| |   |  \| || | | | \ \ /\ / /
+| |_| || |_| | | | | |\  |   | |\  || |_| |  \ V  V /
+ \___/  \___/ |___||_| \_|   |_| \_| \___/    \_/\_/
+  
+%cWelcome to console.
+Join the discord server!
+--------------------------------------------------
+To send an invitation link, use %cjoin()%c
+--------------------------------------------------`,
+  "color: #5865F2; font-family: monospace; font-weight: bold; line-height: 1.2;", 
+  "color: #888; font-family: monospace;",
+  "color: #fff; background: #5865F2; padding: 2px 4px; border-radius: 3px; font-weight: bold;", 
+  "color: #888; background: transparent;"
+);
+
+// 2. join() コマンドの実装
+window.join = () => {
+  const discordUrl = "discord.gg"; 
+  console.log("%c🚀 Opening Discord invitation...", "color: #57F287; font-weight: bold;");
+  
+  setTimeout(() => {
+    window.open(discordUrl, "_blank");
+  }, 500);
+
+  return "Redirecting to Discord..."; 
+};
 
   // ──────────────── プロフィール読み込み ────────────────
   async function loadProfile() {
