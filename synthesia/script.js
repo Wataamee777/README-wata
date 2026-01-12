@@ -1,107 +1,115 @@
-const midiInput = document.getElementById("midiFile");
-const roll = document.getElementById("roll");
-const keys = document.getElementById("keys");
-
-const rctx = roll.getContext("2d");
-const kctx = keys.getContext("2d");
-
-let midi = null;
-let playing = false;
-
-/* ===== Tone.js 安定化設定 ===== */
-Tone.context.latencyHint = "playback";
-
-/* ===== シンセ（ブチブチ完全対策）===== */
-const synth = new Tone.PolySynth({
-  maxPolyphony: 32,
-  voice: Tone.Synth
-}).toDestination();
-
-/* ===== 定数 ===== */
-const SCALE_X = 140;
-const VIEW_AHEAD = 4;
+/* =====================
+   定数・状態
+===================== */
 const WHITE_KEYS = [0, 2, 4, 5, 7, 9, 11];
 const BLACK_KEYS = [1, 3, 6, 8, 10];
 
-/* ===== MIDI 読み込み ===== */
-midiInput.onchange = async e => {
-  if (!e.target.files[0]) return;
-  const buf = await e.target.files[0].arrayBuffer();
+const SCALE_Y = 120;      // ピアノロール縦スケール
+const VIEW_AHEAD = 3.0;  // 先読み秒数
+const MAX_POLY = 28;     // 同時発音制限
+
+let midi = null;
+let playing = false;
+let activeNotes = 0;
+let lastDraw = 0;
+
+/* =====================
+   Canvas
+===================== */
+const roll = document.getElementById("roll");
+const keys = document.getElementById("keys");
+const rctx = roll.getContext("2d");
+const kctx = keys.getContext("2d");
+
+/* =====================
+   Tone.js 初期化
+===================== */
+Tone.context.latencyHint = "balanced";
+
+const synth = new Tone.PolySynth(Tone.Synth, {
+  maxPolyphony: 32,
+  options: {
+    oscillator: {
+      type: "triangle"
+    },
+    envelope: {
+      attack: 0.005,
+      decay: 0.05,
+      sustain: 0.7,
+      release: 0.15
+    }
+  }
+}).toDestination();
+
+/* =====================
+   MIDI 読み込み
+===================== */
+document.getElementById("midi").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const buf = await file.arrayBuffer();
   midi = new Midi(buf);
 
-  // scheduleフラグ初期化
-  midi.tracks.forEach(t =>
-    t.notes.forEach(n => (n._scheduled = false))
-  );
-};
+  Tone.Transport.stop();
+  Tone.Transport.cancel();
+  playing = false;
 
-/* ===== 再生 ===== */
+  rctx.clearRect(0, 0, roll.width, roll.height);
+  kctx.clearRect(0, 0, keys.width, keys.height);
+});
+
+/* =====================
+   再生
+===================== */
 document.getElementById("play").onclick = async () => {
   if (!midi || playing) return;
 
   await Tone.start();
 
-  playing = true;
-  const start = Tone.now() + 0.1; // 少し余裕を持たせる
+  Tone.Transport.stop();
+  Tone.Transport.cancel();
+  Tone.Transport.seconds = 0;
+  activeNotes = 0;
 
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
-      synth.triggerAttackRelease(
-        n.name,
-        n.duration,
-        start + n.time,
-        n.velocity
-      );
+      Tone.Transport.schedule(time => {
+        if (activeNotes >= MAX_POLY) return;
+
+        activeNotes++;
+        const velocity = Math.min(n.velocity, 0.9);
+
+        synth.triggerAttackRelease(
+          n.name,
+          n.duration,
+          time,
+          velocity
+        );
+
+        setTimeout(() => activeNotes--, n.duration * 1000);
+      }, n.time);
     });
   });
 
-  startTime = start;
-  draw();
+  playing = true;
+  Tone.Transport.start("+0.1");
+  requestAnimationFrame(draw);
 };
 
-/* ===== 停止 ===== */
+/* =====================
+   停止
+===================== */
 document.getElementById("stop").onclick = () => {
+  playing = false;
   Tone.Transport.stop();
   Tone.Transport.cancel();
   synth.releaseAll();
-  playing = false;
-
-  midi?.tracks.forEach(t =>
-    t.notes.forEach(n => (n._scheduled = false))
-  );
 };
 
-/* ===== ノートの逐次スケジューリング（超重要）===== */
-function scheduleNotes() {
-  const SCHEDULE_AHEAD = 1;
-
-  Tone.Transport.scheduleRepeat(() => {
-    const now = Tone.Transport.seconds;
-
-    midi.tracks.forEach(track => {
-      track.notes.forEach(n => {
-        if (
-          !n._scheduled &&
-          n.time >= now &&
-          n.time < now + SCHEDULE_AHEAD
-        ) {
-          Tone.Transport.schedule(time => {
-            synth.triggerAttackRelease(
-              n.name,
-              n.duration,
-              time,
-              n.velocity
-            );
-          }, n.time);
-          n._scheduled = true;
-        }
-      });
-    });
-  }, 0.1);
-}
-
-/* ===== 描画（30fps制限）===== */
-let lastDraw = 0;
+/* =====================
+   描画ループ（FPS制限）
+===================== */
 function draw(t = 0) {
   if (!playing) return;
 
@@ -122,35 +130,33 @@ function draw(t = 0) {
   requestAnimationFrame(draw);
 }
 
-/* ===== ピアノロール ===== */
+/* =====================
+   ピアノロール描画
+===================== */
 function drawRoll(now) {
-  const keyWidth = roll.width / 88;
-
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
       if (n.time > now + VIEW_AHEAD || n.time + n.duration < now) return;
 
-      const x = (n.midi - 21) * keyWidth;
-      const y = roll.height - (n.time - now) * SCALE_X;
-      const h = n.duration * SCALE_X;
+      const x = (n.midi - 21) * (roll.width / 88);
+      const y = roll.height - (n.time - now) * SCALE_Y;
+      const h = n.duration * SCALE_Y;
 
-      rctx.fillStyle =
-        now >= n.time && now <= n.time + n.duration
-          ? "#ff4fa3"
-          : "#4fa3ff";
+      const active = now >= n.time && now <= n.time + n.duration;
+      rctx.fillStyle = active ? "#ff4fa3" : "#4fa3ff";
 
-      rctx.fillRect(x, y - h, keyWidth * 0.9, h);
+      rctx.fillRect(x, y - h, (roll.width / 88) - 1, h);
     });
   });
 }
 
-/* ===== 鍵盤（Synthesia寄せ最終形）===== */
+/* =====================
+   鍵盤描画（黒鍵対応）
+===================== */
 function drawKeys(now) {
-  const keyWidth = keys.width / 88;
-  const blackKeyWidth = keyWidth * 0.7;
-  const blackKeyHeight = keys.height * 0.6;
-
-  kctx.lineWidth = 1;
+  const keyW = keys.width / 88;
+  const blackW = keyW * 0.7;
+  const blackH = keys.height * 0.6;
 
   // 白鍵
   for (let i = 0; i < 88; i++) {
@@ -158,10 +164,9 @@ function drawKeys(now) {
     if (BLACK_KEYS.includes(midiNum % 12)) continue;
 
     kctx.fillStyle = "#fff";
-    kctx.fillRect(i * keyWidth, 0, keyWidth, keys.height);
-
+    kctx.fillRect(i * keyW, 0, keyW, keys.height);
     kctx.strokeStyle = "#ccc";
-    kctx.strokeRect(i * keyWidth, 0, keyWidth, keys.height);
+    kctx.strokeRect(i * keyW, 0, keyW, keys.height);
   }
 
   // 黒鍵
@@ -169,12 +174,11 @@ function drawKeys(now) {
     const midiNum = i + 21;
     if (!BLACK_KEYS.includes(midiNum % 12)) continue;
 
-    const x = i * keyWidth - blackKeyWidth / 2;
     kctx.fillStyle = "#333";
-    kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
+    kctx.fillRect(i * keyW - blackW / 2, 0, blackW, blackH);
   }
 
-  // 発音中ハイライト
+  // ハイライト
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
       if (now < n.time || now > n.time + n.duration) return;
@@ -183,16 +187,11 @@ function drawKeys(now) {
       const isBlack = BLACK_KEYS.includes(n.midi % 12);
 
       kctx.fillStyle = "#ff4fa3";
-
       if (isBlack) {
-        const x = i * keyWidth - blackKeyWidth / 2;
-        kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
-        kctx.strokeStyle = "#fff";
-        kctx.strokeRect(x, 0, blackKeyWidth, blackKeyHeight);
+        const x = i * keyW - blackW / 2;
+        kctx.fillRect(x, 0, blackW, blackH);
       } else {
-        kctx.fillRect(i * keyWidth, 0, keyWidth, keys.height);
-        kctx.strokeStyle = "#fff";
-        kctx.strokeRect(i * keyWidth, 0, keyWidth, keys.height);
+        kctx.fillRect(i * keyW, 0, keyW, keys.height);
       }
     });
   });
