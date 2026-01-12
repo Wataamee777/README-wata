@@ -8,18 +8,38 @@ const kctx = keys.getContext("2d");
 let midi = null;
 let playing = false;
 
-const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+/* ===== Tone.js 安定化設定 ===== */
+Tone.context.latencyHint = "playback";
 
+/* ===== シンセ（ブチブチ完全対策）===== */
+const synth = new Tone.PolySynth(Tone.Synth, {
+  maxPolyphony: 64,
+  options: {
+    envelope: {
+      attack: 0.01,
+      decay: 0.1,
+      sustain: 0.8,
+      release: 0.3
+    }
+  }
+}).toDestination();
+
+/* ===== 定数 ===== */
 const SCALE_X = 140;
 const VIEW_AHEAD = 4;
+const WHITE_KEYS = [0, 2, 4, 5, 7, 9, 11];
+const BLACK_KEYS = [1, 3, 6, 8, 10];
 
-const WHITE_KEYS = [0,2,4,5,7,9,11];
-const BLACK_KEYS = [1,3,6,8,10];
-
+/* ===== MIDI 読み込み ===== */
 midiInput.onchange = async e => {
   if (!e.target.files[0]) return;
   const buf = await e.target.files[0].arrayBuffer();
   midi = new Midi(buf);
+
+  // scheduleフラグ初期化
+  midi.tracks.forEach(t =>
+    t.notes.forEach(n => (n._scheduled = false))
+  );
 };
 
 /* ===== 再生 ===== */
@@ -34,19 +54,7 @@ document.getElementById("play").onclick = async () => {
 
   playing = true;
 
-  midi.tracks.forEach(track => {
-    track.notes.forEach(n => {
-      Tone.Transport.schedule(time => {
-        synth.triggerAttackRelease(
-          n.name,
-          n.duration,
-          time,
-          n.velocity
-        );
-      }, n.time);
-    });
-  });
-
+  scheduleNotes();
   Tone.Transport.start();
   draw();
 };
@@ -54,13 +62,54 @@ document.getElementById("play").onclick = async () => {
 /* ===== 停止 ===== */
 document.getElementById("stop").onclick = () => {
   Tone.Transport.stop();
+  Tone.Transport.cancel();
   synth.releaseAll();
   playing = false;
+
+  midi?.tracks.forEach(t =>
+    t.notes.forEach(n => (n._scheduled = false))
+  );
 };
 
-/* ===== メイン描画 ===== */
-function draw() {
+/* ===== ノートの逐次スケジューリング（超重要）===== */
+function scheduleNotes() {
+  const SCHEDULE_AHEAD = 1;
+
+  Tone.Transport.scheduleRepeat(() => {
+    const now = Tone.Transport.seconds;
+
+    midi.tracks.forEach(track => {
+      track.notes.forEach(n => {
+        if (
+          !n._scheduled &&
+          n.time >= now &&
+          n.time < now + SCHEDULE_AHEAD
+        ) {
+          Tone.Transport.schedule(time => {
+            synth.triggerAttackRelease(
+              n.name,
+              n.duration,
+              time,
+              n.velocity
+            );
+          }, n.time);
+          n._scheduled = true;
+        }
+      });
+    });
+  }, 0.1);
+}
+
+/* ===== 描画（30fps制限）===== */
+let lastDraw = 0;
+function draw(t = 0) {
   if (!playing) return;
+
+  if (t - lastDraw < 33) {
+    requestAnimationFrame(draw);
+    return;
+  }
+  lastDraw = t;
 
   const now = Tone.Transport.seconds;
 
@@ -95,7 +144,7 @@ function drawRoll(now) {
   });
 }
 
-/* ===== 鍵盤 ===== */
+/* ===== 鍵盤（Synthesia寄せ最終形）===== */
 function drawKeys(now) {
   const keyWidth = keys.width / 88;
   const blackKeyWidth = keyWidth * 0.7;
@@ -103,34 +152,29 @@ function drawKeys(now) {
 
   kctx.lineWidth = 1;
 
-  /* ===== 1. 白鍵 ===== */
+  // 白鍵
   for (let i = 0; i < 88; i++) {
     const midiNum = i + 21;
     if (BLACK_KEYS.includes(midiNum % 12)) continue;
 
-    kctx.fillStyle = "#ffffff";
+    kctx.fillStyle = "#fff";
     kctx.fillRect(i * keyWidth, 0, keyWidth, keys.height);
 
     kctx.strokeStyle = "#ccc";
     kctx.strokeRect(i * keyWidth, 0, keyWidth, keys.height);
   }
 
-  /* ===== 2. 黒鍵 ===== */
+  // 黒鍵
   for (let i = 0; i < 88; i++) {
     const midiNum = i + 21;
     if (!BLACK_KEYS.includes(midiNum % 12)) continue;
 
     const x = i * keyWidth - blackKeyWidth / 2;
-
-    // 影で立体感
-    kctx.fillStyle = "#222";
-    kctx.fillRect(x, 2, blackKeyWidth, blackKeyHeight);
-
     kctx.fillStyle = "#333";
     kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
   }
 
-  /* ===== 3. 発音中ハイライト ===== */
+  // 発音中ハイライト
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
       if (now < n.time || now > n.time + n.duration) return;
@@ -143,13 +187,11 @@ function drawKeys(now) {
       if (isBlack) {
         const x = i * keyWidth - blackKeyWidth / 2;
         kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
-
-        kctx.strokeStyle = "rgba(255,255,255,0.8)";
+        kctx.strokeStyle = "#fff";
         kctx.strokeRect(x, 0, blackKeyWidth, blackKeyHeight);
       } else {
         kctx.fillRect(i * keyWidth, 0, keyWidth, keys.height);
-
-        kctx.strokeStyle = "rgba(0,0,0,0.3)";
+        kctx.strokeStyle = "#fff";
         kctx.strokeRect(i * keyWidth, 0, keyWidth, keys.height);
       }
     });
