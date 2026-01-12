@@ -12,16 +12,9 @@ let playing = false;
 Tone.context.latencyHint = "playback";
 
 /* ===== シンセ（ブチブチ完全対策）===== */
-const synth = new Tone.PolySynth(Tone.Synth, {
-  maxPolyphony: 64,
-  options: {
-    envelope: {
-      attack: 0.01,
-      decay: 0.1,
-      sustain: 0.8,
-      release: 0.3
-    }
-  }
+const synth = new Tone.PolySynth({
+  maxPolyphony: 32,
+  voice: Tone.Synth
 }).toDestination();
 
 /* ===== 定数 ===== */
@@ -48,14 +41,21 @@ document.getElementById("play").onclick = async () => {
 
   await Tone.start();
 
-  Tone.Transport.stop();
-  Tone.Transport.cancel();
-  Tone.Transport.seconds = 0;
-
   playing = true;
+  const start = Tone.now() + 0.1; // 少し余裕を持たせる
 
-  scheduleNotes();
-  Tone.Transport.start();
+  midi.tracks.forEach(track => {
+    track.notes.forEach(n => {
+      synth.triggerAttackRelease(
+        n.name,
+        n.duration,
+        start + n.time,
+        n.velocity
+      );
+    });
+  });
+
+  startTime = start;
   draw();
 };
 
