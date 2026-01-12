@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Synthesia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>🎹 Web Synthesia</h2>
+
+<input type="file" id="midiFile" accept=".mid,.midi">
+<button id="play">▶ Play</button>
+<button id="stop">■ Stop</button>
+
+<div id="container">
+  <canvas id="roll" width="900" height="500"></canvas>
+  <canvas id="keys" width="900" height="120"></canvas>
+</div>
+
+<script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+<script src="https://unpkg.com/@tonejs/midi/build/Midi.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
