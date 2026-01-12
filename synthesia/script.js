@@ -27,18 +27,23 @@ document.getElementById("play").onclick = async () => {
   if (!midi || playing) return;
 
   await Tone.start();
+
+  Tone.Transport.stop();
   Tone.Transport.cancel();
   Tone.Transport.seconds = 0;
+
   playing = true;
 
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
-      synth.triggerAttackRelease(
-        n.name,
-        n.duration,
-        n.time,
-        n.velocity
-      );
+      Tone.Transport.schedule(time => {
+        synth.triggerAttackRelease(
+          n.name,
+          n.duration,
+          time,
+          n.velocity
+        );
+      }, n.time);
     });
   });
 
