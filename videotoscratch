@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Video → Scratch sb3 Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; padding: 20px; }
+    input, button { margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+<h2>Video → Scratch sb3</h2>
+
+<input type="file" id="video" accept="video/*"><br>
+
+<label>FPS:
+  <input type="number" id="fps" value="10" min="1" max="30">
+</label><br>
+
+<label>幅:
+  <input type="number" id="w" value="480">
+</label>
+<label>高さ:
+  <input type="number" id="h" value="360">
+</label><br>
+
+<button id="run">sb3 生成</button>
+
+<p id="log"></p>
+
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>
