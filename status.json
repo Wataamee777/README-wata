@@ -4,37 +4,37 @@
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 247,
-    "checked_at": "2026-01-25T12:41:53Z"
+    "http_ms": 320,
+    "checked_at": "2026-01-25T13:21:10Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 236,
-    "checked_at": "2026-01-25T12:41:54Z"
+    "http_ms": 53,
+    "checked_at": "2026-01-25T13:21:10Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
     "status": "ok",
     "raw": {
       "ok": true,
-      "updatedAt": "2026/1/25 21:41:49",
+      "updatedAt": "2026/1/25 22:20:49",
       "shards": [
         {
           "shardId": 0,
           "ready": true,
           "ping": 89,
           "guilds": 0,
-          "uptime": 119707924
+          "uptime": 122047929
         },
         {
           "shardId": 1,
           "ready": true,
-          "ping": 89,
+          "ping": 97,
           "guilds": 1,
-          "uptime": 132183322
+          "uptime": 134523327
         }
       ]
     }
