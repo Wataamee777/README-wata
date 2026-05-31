@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google信者度判定</title>
+    
+    <script type="module" src="https://esm.run/@material/web/all.js"></script>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            color: #1f1f1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        h1 img {
+            max-width: 160px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .score-text {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #1f1f1f;
+        }
+
+        md-linear-progress {
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 32px;
+            --md-linear-progress-active-indicator-color: #4285F4;
+            --md-linear-progress-track-color: #e3e3e3;
+            --md-linear-progress-track-shape: 6px;
+            --md-linear-progress-active-indicator-shape: 6px;
+        }
+
+        /* 環境表示エリアのスタイル（インラインブロックで横並び） */
+        .env-info {
+            font-size: 1rem;
+            color: #5f6368;
+            margin-bottom: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px; /* OSとブラウザの間のすき間 */
+        }
+
+        .env-item {
+            display: flex;
+            align-items: center;
+            gap: 6px; /* アイコンと文字の間のすき間 */
+        }
+
+        /* OS・ブラウザアイコンのサイズ設定 */
+        .env-icon {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            /* 判定が出るまでは非表示（または薄く）にしておくスタイル変更も可能 */
+        }
+
+        .message-p {
+            font-size: 1.15rem;
+            color: #444746;
+            line-height: 1.6;
+            margin: 0;
+            padding: 16px 24px;
+            background-color: #f0f4f9;
+            border-radius: 16px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1280px-Google_2015_logo.svg.png" alt="Google">信者度
+    </h1>
+    
+    <div class="score-text" id="scoreText">--%</div>
+
+    <md-linear-progress id="materialProgress" value="0"></md-linear-progress>
+
+    <div class="env-info">
+        <div class="env-item">
+            <span>OS:</span>
+            <img src="assets/unknown.png" id="osIcon" class="env-icon" alt="">
+            <span id="envOs">判定中...</span>
+        </div>
+        <div class="env-item">
+            <span>ブラウザ:</span>
+            <img src="assets/unknown_browser.png" id="browserIcon" class="env-icon" alt="">
+            <span id="envBrowser">判定中...</span>
+        </div>
+    </div>
+
+    <p class="message-p" id="judgeMessage">環境をスキャン中...</p>
+</div>
+
+<script>
+function diagnose() {
+    const ua = navigator.userAgent.toLowerCase();
+    
+    // ブラウザ判定
+    const isIE = ua.includes('msie') || ua.includes('trident');
+    const isEdge = ua.includes('edg/');
+    const isFirefox = ua.includes('firefox');
+    const isSafari = ua.includes('safari') && !ua.includes('chrome') && !ua.includes('chromium');
+    const isChrome = ua.includes('chrome') || ua.includes('crios');
+    const isChromiumBased = isChrome || isEdge;
+
+    // OS判定
+    const isChromeOS = ua.includes('cros');
+    const isAndroid = ua.includes('android');
+    const isFuchsia = ua.includes('fuchsia');
+    const isWindows = ua.includes('windows');
+    const isMac = ua.includes('macintosh');
+    const isIphone = ua.includes('iphone') || ua.includes('ipad');
+    const isApple = isMac || isIphone;
+    
+    const isUbuntu = ua.includes('ubuntu');
+    const isCentOS = ua.includes('centos') || ua.includes('rhel');
+    const isVanillaLinux = ua.includes('linux') && !isAndroid && !isChromeOS && !isUbuntu && !isCentOS;
+
+    // 表示用のテキストマッピング
+    const osName = isChromeOS ? "ChromeOS" : isAndroid ? "Android" : isFuchsia ? "Fuchsia" : isWindows ? "Windows" : isApple ? "Apple" : isVanillaLinux ? "Linux" : isUbuntu ? "Ubuntu" : "不明なOS";
+    const browserName = isIE ? "Internet Explorer" : isEdge ? "Edge" : isFirefox ? "Firefox" : isSafari ? "Safari" : isChrome ? "Chrome" : "不明なブラウザ";
+
+    // 【追加】assets内のファイル名マッピング
+    const osImg = isChromeOS ? "chromeos.jpg" : isAndroid ? "android.jpg" : isFuchsia ? "fuchsia.jpg" : isWindows ? "windows.jpg" : isApple ? "apple.jpg" : isVanillaLinux ? "linux.jpg" : isUbuntu ? "ubuntu.jpg" : "unknown.jpg";
+    const browserImg = isIE ? "ie.jpg" : isEdge ? "edge.jpg" : isFirefox ? "firefox.jpg" : isSafari ? "safari.jpg" : isChrome ? "chrome.jpg" : "unknown_browser.jpg";
+
+    let score = 0;
+    let message = "";
+
+    // 1. Windows特殊（MS信者）の先行判定
+    if (isWindows && isIE) {
+        return { score: 100, msg: "古のMS信者", osName, browserName, osImg, browserImg };
+    }
+    if (isWindows && isEdge) {
+        return { score: 100, msg: "MS信者", osName, browserName, osImg, browserImg };
+    }
+
+    // 2. メイン判定（OS × ブラウザ）
+    if (isChromeOS && isChrome) {
+        score = 100;
+        message = "チート級の純血Googleユーザー。";
+    } else if (isAndroid && isChrome) {
+        score = 85;
+        message = "定番の信者";
+    } else if (isVanillaLinux && isChrome) {
+        score = 80;
+        message = "pcとして安定の信者";
+    } else if (isFuchsia) {
+        score = 120;
+        message = "マニアックなGoogle信者";
+    } else if (isWindows && isChrome) {
+        score = 40;
+        message = "edgeはChromeへの使い捨ての道";
+    } else if (isApple && isChrome) {
+        score = 30;
+        message = "Apple信者か..?";
+    } else if (isApple && isSafari) {
+        score = 0;
+        message = "Apple信者";
+    } else if (isUbuntu && isChrome) {
+        score = 35;
+        message = "にわか信者(?)";
+    } else {
+        if (isChrome) {
+            score = 5;
+            message = "宇宙にChromeは普及してますか？";
+        } else {
+            score = 1;
+            message = "宇宙からの交信ですかね？";
+        }
+    }
+
+    if (isFirefox) {
+        score -= 5;
+        message = "Firefox使いだな？たしかにChromiumだが...Mozila...";
+    }
+
+    if ((isSafari || (!isChromiumBased && !isFirefox && !isIE)) && score !== 120 && !isApple) {
+        score = 0;
+        message = "0%。もっとGoogleを崇めよ";
+    }
+
+    return { score, msg: message, osName, browserName, osImg, browserImg };
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const result = diagnose();
+    const progressBar = document.getElementById('materialProgress');
+    
+    const progressValue = result.score / 100;
+
+    setTimeout(() => {
+        progressBar.value = progressValue;
+        document.getElementById('scoreText').innerText = result.score + '%';
+        document.getElementById('judgeMessage').innerText = result.msg;
+        document.getElementById('envOs').innerText = result.osName;
+        document.getElementById('envBrowser').innerText = result.browserName;
+
+        // 画像パスを書き換える
+        document.getElementById('osIcon').src = 'assets/' + result.osImg;
+        document.getElementById('browserIcon').src = 'assets/' + result.browserImg;
+
+        if (result.score === 120) {
+            progressBar.style.setProperty('--md-linear-progress-active-indicator-color', '#e91e63');
+        }
+        if (result.msg.includes("MS信者")) {
+            progressBar.style.setProperty('--md-linear-progress-active-indicator-color', '#0078d4');
+        }
+    }, 400);
+});
+</script>
+
+</body>
+</html>
