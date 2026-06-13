@@ -4,39 +4,20 @@
     "status": "ok",
     "nslookup": true,
     "http": 200,
-    "http_ms": 85,
-    "checked_at": "2026-06-13T08:12:18Z"
+    "http_ms": 294,
+    "checked_at": "2026-06-13T10:38:03Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "warning",
     "nslookup": true,
     "http": 403,
-    "http_ms": 32,
-    "checked_at": "2026-06-13T08:12:18Z"
+    "http_ms": 31,
+    "checked_at": "2026-06-13T10:38:03Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
-    "status": "ok",
-    "raw": {
-      "ok": true,
-      "updatedAt": "2026/6/13 17:11:25",
-      "shards": [
-        {
-          "shardId": 0,
-          "ready": true,
-          "ping": 87,
-          "guilds": 2,
-          "uptime": 688339945
-        },
-        {
-          "shardId": 1,
-          "ready": true,
-          "ping": 79,
-          "guilds": 2,
-          "uptime": 688334510
-        }
-      ]
-    }
+    "status": "down",
+    "raw": "\n    <!DOCTYPE html>\n    <html lang=\"ja\">\n    <head>\n      <meta charset=\"UTF-8\">\n      <title>404 Not Found</title>\n      <style>\n        body {\n          margin: 0;\n          height: 100vh;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          background: #0f172a;\n          color: #e5e7eb;\n          font-family: system-ui, sans-serif;\n        }\n        .box {\n          text-align: center;\n        }\n        h1 {\n          font-size: 4rem;\n          margin: 0;\n        }\n        p {\n          opacity: 0.8;\n        }\n      </style>\n    </head>\n    <body>\n      <div class=\"box\">\n        <h1>404</h1>\n        <p>このページは存在しません</p>\n        <small>/shards/status/</small>\n      </div>\n    </body>\n    </html>\n  \n"
   }
 }
