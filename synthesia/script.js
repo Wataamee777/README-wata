@@ -1,10 +1,7 @@
 /* =====================
    定数・状態
 ===================== */
-const WHITE_KEYS = [0, 2, 4, 5, 7, 9, 11];
-const BLACK_KEYS = [1, 3, 6, 8, 10];
-
-const SCALE_Y = 120;      // ピアノロール縦スケール
+const BLACK_KEYS =;
 const VIEW_AHEAD = 3.0;  // 先読み秒数
 const MAX_POLY = 28;     // 同時発音制限
 
@@ -14,36 +11,92 @@ let activeNotes = 0;
 let lastDraw = 0;
 
 /* =====================
-   Canvas
+   WebGL 初期化
 ===================== */
-const roll = document.getElementById("roll");
-const keys = document.getElementById("keys");
-const rctx = roll.getContext("2d");
-const kctx = keys.getContext("2d");
+const canvas = document.getElementById("glCanvas");
+const gl = canvas.getContext("webgl");
+
+if (!gl) {
+  alert("WebGLがサポートされていません");
+}
+
+// バーテックスシェーダー（頂点）
+const vsSource = `
+  attribute vec2 aPosition;
+  attribute vec4 aColor;
+  varying vec4 vColor;
+  void main() {
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+    vColor = aColor;
+  }
+`;
+
+// フラグメントシェーダー（色）
+const fsSource = `
+  precision mediump float;
+  varying vec4 vColor;
+  void main() {
+    gl_FragColor = vColor;
+  }
+`;
+
+// シェーダープログラムの作成
+function createShader(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  return shader;
+}
+
+const program = gl.createProgram();
+gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
+gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
+gl.linkProgram(program);
+gl.useProgram(program);
+
+// バッファのセットアップ
+const positionBuffer = gl.createBuffer();
+const aPosition = gl.getAttribLocation(program, "aPosition");
+gl.enableVertexAttribArray(aPosition);
+
+const colorBuffer = gl.createBuffer();
+const aColor = gl.getAttribLocation(program, "aColor");
+gl.enableVertexAttribArray(aColor);
+
+// 描画用データ配列
+let vertices = [];
+let colors = [];
+
+// 矩形（四角形）を頂点配列に追加するヘルパー
+function addRect(x1, y1, x2, y2, r, g, b) {
+  // WebGLのクリッピング空間 (-1 から 1) に変換
+  const vx1 = (x1 / canvas.width) * 2 - 1;
+  const vy1 = (y1 / canvas.height) * -2 + 1;
+  const vx2 = (x2 / canvas.width) * 2 - 1;
+  const vy2 = (y2 / canvas.height) * -2 + 1;
+
+  // 2つの三角形で四角形を形成
+  vertices.push(
+    vx1, vy1,  vx2, vy1,  vx1, vy2,
+    vx1, vy2,  vx2, vy1,  vx2, vy2
+  );
+
+  // 6頂点分の色を追加
+  for (let i = 0; i < 6; i++) {
+    colors.push(r, g, b, 1.0);
+  }
+}
 
 /* =====================
-   Tone.js 初期化
+   Tone.js 初期化 & MIDI 読み込み
 ===================== */
 Tone.context.latencyHint = "balanced";
 
 const synth = new Tone.PolySynth(Tone.Synth, {
   maxPolyphony: 32,
-  options: {
-    oscillator: {
-      type: "triangle"
-    },
-    envelope: {
-      attack: 0.005,
-      decay: 0.05,
-      sustain: 0.7,
-      release: 0.15
-    }
-  }
+  options: { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.05, sustain: 0.7, release: 0.15 } }
 }).toDestination();
 
-/* =====================
-   MIDI 読み込み
-===================== */
 document.getElementById("midi").addEventListener("change", async e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -55,16 +108,15 @@ document.getElementById("midi").addEventListener("change", async e => {
   Tone.Transport.cancel();
   playing = false;
 
-  rctx.clearRect(0, 0, roll.width, roll.height);
-  kctx.clearRect(0, 0, keys.width, keys.height);
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
 });
 
 /* =====================
-   再生
+   再生・停止
 ===================== */
 document.getElementById("play").onclick = async () => {
   if (!midi || playing) return;
-
   await Tone.start();
 
   Tone.Transport.stop();
@@ -76,17 +128,8 @@ document.getElementById("play").onclick = async () => {
     track.notes.forEach(n => {
       Tone.Transport.schedule(time => {
         if (activeNotes >= MAX_POLY) return;
-
         activeNotes++;
-        const velocity = Math.min(n.velocity, 0.9);
-
-        synth.triggerAttackRelease(
-          n.name,
-          n.duration,
-          time,
-          velocity
-        );
-
+        synth.triggerAttackRelease(n.name, n.duration, time, Math.min(n.velocity, 0.9));
         setTimeout(() => activeNotes--, n.duration * 1000);
       }, n.time);
     });
@@ -97,9 +140,6 @@ document.getElementById("play").onclick = async () => {
   requestAnimationFrame(draw);
 };
 
-/* =====================
-   停止
-===================== */
 document.getElementById("stop").onclick = () => {
   playing = false;
   Tone.Transport.stop();
@@ -121,78 +161,93 @@ function draw(t = 0) {
 
   const now = Tone.Transport.seconds;
 
-  rctx.clearRect(0, 0, roll.width, roll.height);
-  kctx.clearRect(0, 0, keys.width, keys.height);
+  // 配列をクリア
+  vertices = [];
+  colors = [];
 
-  drawRoll(now);
-  drawKeys(now);
+  // レンダリングデータの構築
+  drawRollAndKeys(now);
+
+  // WebGLバッファへデータを転送して描画
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.clearColor(0.1, 0.1, 0.1, 1.0); // 背景色（濃いグレー）
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STREAM_DRAW);
+  gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STREAM_DRAW);
+  gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
 
   requestAnimationFrame(draw);
 }
 
 /* =====================
-   ピアノロール描画
+   ピアノロール＆鍵盤 統合描画
 ===================== */
-function drawRoll(now) {
+function drawRollAndKeys(now) {
+  const keyW = canvas.width / 88;
+  const keysH = 100; // 鍵盤の高さ（ピクセル）
+  const rollH = canvas.height - keysH; // ピアノロールの表示エリアの高さ
+  const blackW = keyW * 0.7;
+  const blackH = keysH * 0.6;
+
+  // 現在発音中のMIDI番号を記録するセット
+  const activeMidiNotes = new Set();
+
+  // 1. ピアノロール（ノート）の計算
   midi.tracks.forEach(track => {
     track.notes.forEach(n => {
       if (n.time > now + VIEW_AHEAD || n.time + n.duration < now) return;
 
-      const x = (n.midi - 21) * (roll.width / 88);
-      const y = roll.height - (n.time - now) * SCALE_Y;
-      const h = n.duration * SCALE_Y;
-
       const active = now >= n.time && now <= n.time + n.duration;
-      rctx.fillStyle = active ? "#ff4fa3" : "#4fa3ff";
+      if (active) activeMidiNotes.add(n.midi);
 
-      rctx.fillRect(x, y - h, (roll.width / 88) - 1, h);
+      // 上から下に降る座標計算
+      const x = (n.midi - 21) * keyW;
+      const y2 = rollH - ((n.time - now) / VIEW_AHEAD) * rollH;
+      const y1 = rollH - ((n.time + n.duration - now) / VIEW_AHEAD) * rollH;
+
+      // 発音中はピンク(#ff4fa3)、待機中は青(#4fa3ff)
+      if (active) {
+        addRect(x, y1, x + keyW - 1, y2, 1.0, 0.31, 0.64);
+      } else {
+        addRect(x, y1, x + keyW - 1, y2, 0.31, 0.64, 1.0);
+      }
     });
   });
-}
 
-/* =====================
-   鍵盤描画（黒鍵対応）
-===================== */
-function drawKeys(now) {
-  const keyW = keys.width / 88;
-  const blackW = keyW * 0.7;
-  const blackH = keys.height * 0.6;
-
-  // 白鍵
+  // 2. 白鍵の描画
   for (let i = 0; i < 88; i++) {
     const midiNum = i + 21;
     if (BLACK_KEYS.includes(midiNum % 12)) continue;
 
-    kctx.fillStyle = "#fff";
-    kctx.fillRect(i * keyW, 0, keyW, keys.height);
-    kctx.strokeStyle = "#ccc";
-    kctx.strokeRect(i * keyW, 0, keyW, keys.height);
+    const x = i * keyW;
+    const isActive = activeMidiNotes.has(midiNum);
+
+    if (isActive) {
+      addRect(x, rollH, x + keyW - 1, canvas.height, 1.0, 0.31, 0.64); // ピンク
+    } else {
+      addRect(x, rollH, x + keyW - 1, canvas.height, 1.0, 1.0, 1.0); // 白
+    }
   }
 
-  // 黒鍵
+  // 3. 黒鍵の描画（白鍵の上に重ねる）
   for (let i = 0; i < 88; i++) {
     const midiNum = i + 21;
     if (!BLACK_KEYS.includes(midiNum % 12)) continue;
 
-    kctx.fillStyle = "#333";
-    kctx.fillRect(i * keyW - blackW / 2, 0, blackW, blackH);
+    const x = i * keyW - blackW / 2;
+    const isActive = activeMidiNotes.has(midiNum);
+
+    if (isActive) {
+      addRect(x, rollH, x + blackW, rollH + blackH, 1.0, 0.31, 0.64); // ピンク
+    } else {
+      addRect(x, rollH, x + blackW, rollH + blackH, 0.2, 0.2, 0.2); // 黒
+    }
   }
-
-  // ハイライト
-  midi.tracks.forEach(track => {
-    track.notes.forEach(n => {
-      if (now < n.time || now > n.time + n.duration) return;
-
-      const i = n.midi - 21;
-      const isBlack = BLACK_KEYS.includes(n.midi % 12);
-
-      kctx.fillStyle = "#ff4fa3";
-      if (isBlack) {
-        const x = i * keyW - blackW / 2;
-        kctx.fillRect(x, 0, blackW, blackH);
-      } else {
-        kctx.fillRect(i * keyW, 0, keyW, keys.height);
-      }
-    });
-  });
 }
