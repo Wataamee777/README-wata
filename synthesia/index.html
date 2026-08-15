@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>WebGL Piano Roll</title>
+  <title>WebGL ピアノロール</title>
   <style>
     body {
       margin: 0;
@@ -20,7 +20,6 @@
       margin-bottom: 15px;
       z-index: 10;
     }
-    /* WebGL Canvas のサイズ固定、またはレスポンシブ */
     #glCanvas {
       background: #111;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -30,11 +29,18 @@
       padding: 8px 12px;
       margin: 0 5px;
       cursor: pointer;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #444;
     }
   </style>
-  <!-- 必要なライブラリの読み込み -->
-  <script src="http://unpkg.com/tone"></script>
+  <!-- ライブラリの読み込み -->
   <script src="https://unpkg.com/@tonejs/midi"></script>
+  <script src="https://unpkg.com/tone"></script>
 </head>
 <body>
 
@@ -44,7 +50,7 @@
     <button id="stop">停止</button>
   </div>
 
-  <!-- WebGL 用の統合キャンバス -->
+  <!-- 1つに統合されたWebGL用のキャンバス -->
   <canvas id="glCanvas" width="800" height="600"></canvas>
 
   <script src="script.js"></script>
