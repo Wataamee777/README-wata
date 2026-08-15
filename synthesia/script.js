@@ -10,6 +10,9 @@ let playing = false;
 let activeNotes = 0;
 let lastDraw = 0;
 
+// 【劇的改善】配列の全ループを回避するためのインデックス管理
+let currentPlayIndex = 0; 
+
 /* =====================
    WebGL 初期化
 ===================== */
@@ -20,7 +23,6 @@ if (!gl) {
   alert("WebGLがサポートされていません。ブラウザの設定を確認してください。");
 }
 
-// バーテックスシェーダー（頂点座標の処理）
 const vsSource = `
   attribute vec2 aPosition;
   attribute vec4 aColor;
@@ -31,7 +33,6 @@ const vsSource = `
   }
 `;
 
-// フラグメントシェーダー（色の処理）
 const fsSource = `
   precision mediump float;
   varying vec4 vColor;
@@ -40,14 +41,10 @@ const fsSource = `
   }
 `;
 
-// シェーダープログラムの作成
 function createShader(gl, type, source) {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error("Shader compile error:", gl.getShaderInfoLog(shader));
-  }
   return shader;
 }
 
@@ -55,13 +52,8 @@ const program = gl.createProgram();
 gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
 gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
 gl.linkProgram(program);
-
-if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-  console.error("Program link error:", gl.getProgramInfoLog(program));
-}
 gl.useProgram(program);
 
-// バッファのセットアップ
 const positionBuffer = gl.createBuffer();
 const aPosition = gl.getAttribLocation(program, "aPosition");
 gl.enableVertexAttribArray(aPosition);
@@ -70,25 +62,20 @@ const colorBuffer = gl.createBuffer();
 const aColor = gl.getAttribLocation(program, "aColor");
 gl.enableVertexAttribArray(aColor);
 
-// 描画用データ配列
 let vertices = [];
 let colors = [];
 
-// 矩形（四角形）を頂点配列に追加するヘルパー
 function addRect(x1, y1, x2, y2, r, g, b) {
-  // WebGLのクリッピング空間 (-1 から 1) に変換
   const vx1 = (x1 / canvas.width) * 2 - 1;
   const vy1 = (y1 / canvas.height) * -2 + 1;
   const vx2 = (x2 / canvas.width) * 2 - 1;
   const vy2 = (y2 / canvas.height) * -2 + 1;
 
-  // 2つの三角形で四角形を形成
   vertices.push(
     vx1, vy1,  vx2, vy1,  vx1, vy2,
     vx1, vy2,  vx2, vy1,  vx2, vy2
   );
 
-  // 6頂点分の色を追加
   for (let i = 0; i < 6; i++) {
     colors.push(r, g, b, 1.0);
   }
@@ -107,72 +94,99 @@ const synth = new Tone.PolySynth(Tone.Synth, {
   }
 }).toDestination();
 
+// すべてのトラックのノートを時間順に1つの配列にフラット化する変数
+let allNotes = [];
+
 document.getElementById("midi").addEventListener("change", async e => {
-  const file = e.target.files[0]; // 修正完了：[0]でファイルオブジェクトを取得
+  const file = e.target.files[0]; 
   if (!file) return;
 
   const buf = await file.arrayBuffer();
   midi = new Midi(buf);
 
-  Tone.Transport.stop();
-  Tone.Transport.cancel();
-  playing = false;
+  // 【高速化】全トラックの音符を1つの配列にまとめ、演奏時間順にガチガチにソートする
+  allNotes = [];
+  midi.tracks.forEach(track => {
+    track.notes.forEach(n => {
+      allNotes.push(n);
+    });
+  });
+  allNotes.sort((a, b) => a.time - b.time);
 
-  // 画面を暗いグレーでクリア
+  stopPlayback();
+
   gl.clearColor(0.07, 0.07, 0.07, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 });
 
 /* =====================
-   再生
+   再生・停止ロジック（全面書き換え）
 ===================== */
 document.getElementById("play").onclick = async () => {
-  if (!midi || playing) return;
+  if (allNotes.length === 0 || playing) return;
 
   await Tone.start();
 
   Tone.Transport.stop();
   Tone.Transport.cancel();
   Tone.Transport.seconds = 0;
+  
   activeNotes = 0;
+  currentPlayIndex = 0; // 再生位置を先頭リセット
+  playing = true;
 
-  midi.tracks.forEach(track => {
-    track.notes.forEach(n => {
-      Tone.Transport.schedule(time => {
-        if (activeNotes >= MAX_POLY) return;
+  // 【音切れ対策の要】一括登録（schedule）を完全に廃止。
+  // 10ミリ秒ごとに「今鳴るべき音」だけをミリ秒単位で切り出して発音させる超軽量ループ
+  Tone.Transport.scheduleRepeat((time) => {
+    const now = Tone.Transport.seconds;
 
+    // 現在の時間以降のノートを、ソート済み配列から順番にチェック
+    while (currentPlayIndex < allNotes.length) {
+      const n = allNotes[currentPlayIndex];
+
+      // まだ発音タイミングに達していない音符が来たらループを抜ける（これ以上の無駄な探索をストップ）
+      if (n.time > now + 0.02) break; 
+
+      // すでに通り過ぎた古い音符はスキップして次へ
+      if (n.time < now - 0.01) {
+        currentPlayIndex++;
+        continue;
+      }
+
+      // 同時発音数制限を超えていなければ発音
+      if (activeNotes < MAX_POLY) {
         activeNotes++;
         const velocity = Math.min(n.velocity, 0.9);
-
+        
         synth.triggerAttackRelease(
           n.name,
           n.duration,
-          time,
+          time + (n.time - now), // 正確な時間差を補正
           velocity
         );
 
         setTimeout(() => activeNotes--, n.duration * 1000);
-      }, n.time);
-    });
-  });
+      }
 
-  playing = true;
-  Tone.Transport.start("+0.1");
+      currentPlayIndex++;
+    }
+  }, 0.01); // 10ms周期で動かす
+
+  Tone.Transport.start("+0.05");
   requestAnimationFrame(draw);
 };
 
-/* =====================
-   停止
-===================== */
-document.getElementById("stop").onclick = () => {
+function stopPlayback() {
   playing = false;
   Tone.Transport.stop();
   Tone.Transport.cancel();
   synth.releaseAll();
-};
+}
+
+document.getElementById("stop").onclick = stopPlayback;
 
 /* =====================
-   描画ループ（FPS制限）
+   描画ループ（描画の探索もバイナリサーチ風に最適化）
 ===================== */
 function draw(t = 0) {
   if (!playing) return;
@@ -185,14 +199,11 @@ function draw(t = 0) {
 
   const now = Tone.Transport.seconds;
 
-  // 配列をクリア
   vertices = [];
   colors = [];
 
-  // レンダリングデータの構築
   drawRollAndKeys(now);
 
-  // WebGLバッファへデータを転送して描画
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0.07, 0.07, 0.07, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -215,34 +226,39 @@ function draw(t = 0) {
 ===================== */
 function drawRollAndKeys(now) {
   const keyW = canvas.width / 88;
-  const keysH = 100; // 鍵盤の高さ
-  const rollH = canvas.height - keysH; // ピアノロールの高さ
+  const keysH = 100; 
+  const rollH = canvas.height - keysH; 
   const blackW = keyW * 0.7;
   const blackH = keysH * 0.6;
 
-  // 現在発音中のMIDI番号を記録するセット
   const activeMidiNotes = new Set();
 
-  // 1. ピアノロール（ノート）の計算
-  midi.tracks.forEach(track => {
-    track.notes.forEach(n => {
-      if (n.time > now + VIEW_AHEAD || n.time + n.duration < now) return;
+  // 【描画の高速化】何万個もの音符をすべてループするのをやめる
+  // 「現在の再生位置」の少し前から探索を開始し、画面内のものだけを瞬時に見つける
+  let startLookIndex = Math.max(0, currentPlayIndex - 100);
 
-      const active = now >= n.time && now <= n.time + n.duration;
-      if (active) activeMidiNotes.add(n.midi);
+  for (let i = startLookIndex; i < allNotes.length; i++) {
+    const n = allNotes[i];
 
-      // 上から下に降る座標計算
-      const x = (n.midi - 21) * keyW;
-      const y2 = rollH - ((n.time - now) / VIEW_AHEAD) * rollH;
-      const y1 = rollH - ((n.time + n.duration - now) / VIEW_AHEAD) * rollH;
+    // 先読み時間（画面最上部）を超えたら、それ以降の音符はまだ画面に映らないのでループを即終了
+    if (n.time > now + VIEW_AHEAD) break; 
 
-      if (active) {
-        addRect(x, y1, x + keyW - 1, y2, 1.0, 0.31, 0.64); // ピンク(#ff4fa3)
-      } else {
-        addRect(x, y1, x + keyW - 1, y2, 0.31, 0.64, 1.0); // 青(#4fa3ff)
-      }
-    });
-  });
+    // すでに画面最下部（過去）に消え去った音符はスキップ
+    if (n.time + n.duration < now) continue;
+
+    const active = now >= n.time && now <= n.time + n.duration;
+    if (active) activeMidiNotes.add(n.midi);
+
+    const x = (n.midi - 21) * keyW;
+    const y2 = rollH - ((n.time - now) / VIEW_AHEAD) * rollH;
+    const y1 = rollH - ((n.time + n.duration - now) / VIEW_AHEAD) * rollH;
+
+    if (active) {
+      addRect(x, y1, x + keyW - 1, y2, 1.0, 0.31, 0.64);
+    } else {
+      addRect(x, y1, x + keyW - 1, y2, 0.31, 0.64, 1.0);
+    }
+  }
 
   // 2. 白鍵の描画
   for (let i = 0; i < 88; i++) {
