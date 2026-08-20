@@ -1,19 +1,19 @@
 {
   "hatoage.wata777.f5.si": {
     "type": "site",
-    "status": "ok",
+    "status": "warning",
     "nslookup": true,
-    "http": 200,
-    "http_ms": 246,
-    "checked_at": "2026-08-20T11:07:06Z"
+    "http": 403,
+    "http_ms": 28,
+    "checked_at": "2026-08-20T11:37:00Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "warning",
     "nslookup": true,
     "http": 403,
-    "http_ms": 69,
-    "checked_at": "2026-08-20T11:07:06Z"
+    "http_ms": 35,
+    "checked_at": "2026-08-20T11:37:00Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
