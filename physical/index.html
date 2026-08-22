@@ -2,86 +2,107 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGPU Hybrid Physics Engine Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebGPU 0%_0%_0% Hybrid Physics Engine</title>
     <style>
-        body {
+        html, body {
             margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            background-color: #fff;
-            font-family: sans-serif;
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             user-select: none;
             touch-action: none;
         }
         #ui-container {
             position: absolute;
-            top: 15px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 8px 16px;
+            border-radius: 40px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.08);
             z-index: 10;
-            backdrop-filter: blur(5px);
-            border: 1px solid #333;
+            border: 1px solid rgba(0,0,0,0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         button {
-            background: #222;
-            color: #ccc;
-            border: 1px solid #444;
-            padding: 8px 18px;
+            background: transparent;
+            color: #666666;
+            border: none;
+            padding: 10px 20px;
             font-size: 14px;
-            font-weight: bold;
-            border-radius: 20px;
+            font-weight: 600;
+            border-radius: 30px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        button:hover {
-            background: #333;
-            color: #fff;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         button.active {
-            background: #00ff88;
-            color: #000;
-            border-color: #00ff88;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            background: #000000;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         button#btn-clear {
-            border-color: #ff4444;
-            color: #ff4444;
+            color: #ff3b30;
         }
-        button#btn-clear:hover {
-            background: #ff4444;
-            color: #fff;
+        button#btn-clear:active {
+            background: rgba(255, 59, 48, 0.1);
         }
         #stats {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
-            color: #888;
+            bottom: 20px;
+            left: 20px;
+            color: #000000;
             font-family: monospace;
-            font-size: 14px;
-            background: rgba(0,0,0,0.5);
-            padding: 8px 12px;
-            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.85);
+            padding: 6px 12px;
+            border-radius: 6px;
             pointer-events: none;
+            border: 1px solid rgba(0,0,0,0.1);
+            backdrop-filter: blur(4px);
+        }
+        #error-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff;
+            color: #ff3b30;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 100;
+            font-size: 16px;
+            line-height: 1.6;
         }
         canvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 <body>
 
     <div id="ui-container">
-        <button id="btn-wall" class="active">🛠 壁・床を描く</button>
+        <button id="btn-wall" class="active">🛠 壁を描く</button>
         <button id="btn-ball">🟢 玉を落とす</button>
-        <button id="btn-clear">🗑 リセット</button>
+        <button id="btn-clear">🗑 クリア</button>
+    </div>
+
+    <div id="error-overlay">
+        <div style="font-size: 40px; margin-bottom: 20px;">⚠️</div>
+        <div id="error-text"></div>
     </div>
 
     <div id="stats">FPS: -- | Balls: 0 / 32768 | Walls: 0 / 512</div>
@@ -89,61 +110,52 @@
 
 <script type="module">
 
-// --- 定数定義 ---
 const MAX_BALLS = 32768; 
 const MAX_WALLS = 512;
-const BALL_RADIUS = 5.0;
+const BALL_RADIUS = 6.0;
 
-// --- アプリケーション状態 ---
-let currentMode = 'wall'; // 'wall' または 'ball'
+let currentMode = 'wall'; 
 let isDrawing = false;
 let startX = 0, startY = 0;
 
-// CPU側のデータバッファ（Float32配列）
-// Ball: [posX, posY, velX, velY]
 const ballsData = new Float32Array(MAX_BALLS * 4);
 let ballCount = 0;
 
-// Wall: [startX, startY, endX, endY]
 const wallsData = new Float32Array(MAX_WALLS * 4);
 let wallCount = 0;
 
-// インタラクション用のプレビュー壁情報
 const previewWall = { startX: 0, startY: 0, endX: 0, endY: 0, active: 0 };
 
-// --- WGSL シェーダーコード ---
+// WGSLのアライメント規則に合わせて構造体を再設計
 const shaderSource = `
     struct Ball {
         pos: vec2<f32>,
         vel: vec2<f32>,
     }
-
     struct Wall {
         p0: vec2<f32>,
         p1: vec2<f32>,
     }
-
     struct SimParams {
         canvasSize: vec2<f32>,
-        ballCount: u32,
-        wallCount: u32,
         ballRadius: f32,
         gravity: f32,
         dt: f32,
-        padding: f32,
+        ballCount: u32,
+        wallCount: u32,
+        pad: u32,
     }
-
     struct PreviewParams {
         p0: vec2<f32>,
         p1: vec2<f32>,
         active: u32,
+        pad: u32,
     }
 
     @group(0) @binding(0) var<storage, read_write> balls: array<Ball>;
     @group(0) @binding(1) var<storage, read> walls: array<Wall>;
     @group(0) @binding(2) var<uniform> params: SimParams;
 
-    // --- Compute Shader (物理シミュレーション) ---
     @compute @workgroup_size(256)
     fn computeMain(@builtin(global_invocation_id) global_id: vec3<u32>) {
         let index = global_id.x;
@@ -151,136 +163,73 @@ const shaderSource = `
 
         var ball = balls[index];
         let r = params.ballRadius;
-
-        // 1. 重力の適用
+        
         ball.vel.y += params.gravity * params.dt;
-
-        // 仮の次フレーム座標
         var nextPos = ball.pos + ball.vel * params.dt;
 
-        // 2. 自分で引いた壁・床とのハイブリッド衝突判定
         for (var i = 0u; i < params.wallCount; i = i + 1u) {
             let wall = walls[i];
             let ab = wall.p1 - wall.p0;
             let ac = nextPos - wall.p0;
-
-            // 線分上の最寄点(t)を計算 (0.0 ～ 1.0 にクランプ)
             let lenSq = dot(ab, ab);
             var t = 0.0;
-            if (lenSq > 0.0) {
-                t = clamp(dot(ac, ab) / lenSq, 0.0, 1.0);
-            }
+            if (lenSq > 0.0) { t = clamp(dot(ac, ab) / lenSq, 0.0, 1.0); }
             let closestPoint = wall.p0 + ab * t;
-
-            // 最寄点から玉の中心へのベクトルと距離
             let toBall = nextPos - closestPoint;
             let dist = length(toBall);
 
             if (dist < r && dist > 0.0) {
-                // 衝突法線ベクトル
                 let normal = toBall / dist;
-
-                // 現在の速度を法線方向（垂直）と接線方向（平行）に分解
                 let vNormal = dot(ball.vel, normal);
                 let tangent = vec2<f32>(-normal.y, normal.x);
                 let vTangent = dot(ball.vel, tangent);
-
-                // 位置の押し戻し（めり込み防止）
+                
                 nextPos = closestPoint + normal * r;
 
-                // ハイブリッド物理判定：
-                // 法線方向の衝突速度が遅い場合は「床（転がり）」、速い場合は「壁（バウンド）」
-                if (vNormal < 15.0) {
-                    // 【床挙動】垂直速度をゼロにし、接線方向に強い摩擦をかける（沿って転がる）
-                    ball.vel = tangent * vTangent * 0.95;
+                if (vNormal < 25.0) {
+                    ball.vel = tangent * vTangent * 0.93;
                 } else {
-                    // 【壁挙動】反発係数をかけて跳ね返す
-                    ball.vel = tangent * vTangent * 0.98 - normal * vNormal * 0.4;
+                    ball.vel = tangent * vTangent * 0.95 - normal * vNormal * 0.35;
                 }
             }
         }
 
-        // 3. 画面外周（外壁）との衝突判定
-        // 下壁 (床)
         if (nextPos.y > params.canvasSize.y - r) {
             nextPos.y = params.canvasSize.y - r;
-            if (abs(ball.vel.y) < 20.0) {
-                ball.vel.y = 0.0;
-                ball.vel.x *= 0.95; // 床面摩擦
-            } else {
-                ball.vel.y = -ball.vel.y * 0.4; // バウンド
-            }
+            if (abs(ball.vel.y) < 30.0) { ball.vel.y = 0.0; ball.vel.x *= 0.93; } 
+            else { ball.vel.y = -ball.vel.y * 0.35; }
         }
-        // 左右の壁
-        if (nextPos.x < r) {
-            nextPos.x = r;
-            ball.vel.x = -ball.vel.x * 0.5;
-        } else if (nextPos.x > params.canvasSize.x - r) {
-            nextPos.x = params.canvasSize.x - r;
-            ball.vel.x = -ball.vel.x * 0.5;
-        }
+        if (nextPos.x < r) { nextPos.x = r; ball.vel.x = -ball.vel.x * 0.4; } 
+        else if (nextPos.x > params.canvasSize.x - r) { nextPos.x = params.canvasSize.x - r; ball.vel.x = -ball.vel.x * 0.4; }
 
-        // 座標確定
         ball.pos = nextPos;
         balls[index] = ball;
     }
 
-    // --- Vertex Shader (描画用頂点シェーダー) ---
-    struct VertexOutput {
-        @builtin(position) position: vec4<f32>,
-        @location(0) color: vec3<f32>,
-    }
-
     @vertex
-    fn vertexMain(
-        @builtin(vertex_index) vertexIdx: u32,
-        @builtin(instance_index) instanceIdx: u32
-    ) -> VertexOutput {
-        var output: VertexOutput;
-
-        // インスタンス（各玉）のデータを取得
+    fn vertexMain(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
         let ball = balls[instanceIdx];
-        let r = params.ballRadius;
-
-        // 簡易的な四角形（ファン型）で円を構成する4つの頂点
-        var pos = vec2<f32>(0.0, 0.0);
-        if (vertexIdx == 0u) { pos = vec2<f32>(-1.0, -1.0); }
-        if (vertexIdx == 1u) { pos = vec2<f32>(1.0, -1.0); }
-        if (vertexIdx == 2u) { pos = vec2<f32>(-1.0, 1.0); }
-        if (vertexIdx == 3u) { pos = vec2<f32>(1.0, 1.0); }
-
-        let vertexPos = ball.pos + pos * r;
-
-        // 画面座標 (0~Width, 0~Height) を クリップ空間 (-1~1) に変換
-        let zeroToOne = vertexPos / params.canvasSize;
-        let clipPos = zeroToOne * 2.0 - 1.0;
-        output.position = vec4<f32>(clipPos.x, -clipPos.y, 0.0, 1.0);
-
-        // 速度に基づいたエフェクトカラー（速いほど赤緑に発光）
-        let speed = length(ball.vel);
-        let heat = clamp(speed / 400.0, 0.0, 1.0);
-        output.color = mix(vec3<f32>(0.0, 1.0, 0.5), vec3<f32>(1.0, 0.3, 0.1), heat);
-
-        return output;
+        var offset = vec2<f32>(0.0);
+        if (vertexIdx == 0u) { offset = vec2<f32>(-1.0, -1.0); }
+        if (vertexIdx == 1u) { offset = vec2<f32>(1.0, -1.0); }
+        if (vertexIdx == 2u) { offset = vec2<f32>(-1.0, 1.0); }
+        if (vertexIdx == 3u) { offset = vec2<f32>(1.0, 1.0); }
+        
+        let vertexPos = ball.pos + offset * params.ballRadius;
+        let clipPos = (vertexPos / params.canvasSize) * 2.0 - 1.0;
+        return vec4<f32>(clipPos.x, -clipPos.y, 0.0, 1.0);
     }
 
-    // --- Fragment Shader (描画用フラグメントシェーダー) ---
     @fragment
-    fn fragmentMain(input: VertexOutput) -> @location(0) vec4<f32> {
-        return vec4<f32>(input.color, 1.0);
+    fn fragmentMain() -> @location(0) vec4<f32> {
+        return vec4<f32>(0.0, 0.0, 0.0, 1.0); 
     }
 
-    // --- ユーザーが引く「壁」を描画するためのシェーダー群 ---
     @group(1) @binding(0) var<uniform> preview: PreviewParams;
 
     @vertex
-    fn vertexWall(
-        @builtin(vertex_index) vertexIdx: u32,
-        @builtin(instance_index) instanceIdx: u32
-    ) -> @builtin(position) vec4<f32> {
+    fn vertexWall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
         var p = vec2<f32>(0.0);
-        
-        // 通常の壁リストか、現在ドラッグ中のプレビュー壁か
         if (instanceIdx == params.wallCount) {
             if (preview.active == 0u) { return vec4<f32>(0.0); }
             p = select(preview.p0, preview.p1, vertexIdx == 1u);
@@ -288,296 +237,263 @@ const shaderSource = `
             let w = walls[instanceIdx];
             p = select(w.p0, w.p1, vertexIdx == 1u);
         }
-
         let clip = (p / params.canvasSize) * 2.0 - 1.0;
         return vec4<f32>(clip.x, -clip.y, 0.0, 1.0);
     }
 
     @fragment
     fn fragmentWall() -> @location(0) vec4<f32> {
-        return vec4<f32>(0.9, 0.9, 1.0, 1.0); // 白っぽく光る壁
+        return vec4<f32>(0.0, 0.0, 0.0, 1.0); 
     }
 `;
 
-async function init() {
-    const statsDiv = document.getElementById("stats");
+function showError(message) {
+    document.getElementById("error-overlay").style.display = "flex";
+    document.getElementById("error-text").innerHTML = message;
+}
 
-    // 1. WebGPUの初期化・非対応ブラウザ判定
+async function init() {
     if (!navigator.gpu) {
-        statsDiv.style.color = "#ff4444";
-        statsDiv.style.whiteSpace = "pre-wrap";
-        statsDiv.textContent = "❌ エラー: WebGPUが起動できません。\n原因として以下が考えられます:\n1. localhostや127.0.0.1、またはHTTPS接続以外のローカルファイル(file://)から開いている\n2. ブラウザがWebGPU非対応、またはハードウェアアクセラレーションがオフになっている\n\n【対策】VS Codeの『Live Server』を使うか、ターミナルで『python -m http.server 8000』を実行してブラウザでアクセスしてください。";
+        showError("<strong>お使いの端末・ブラウザはWebGPUに対応していません。</strong><br><br>【推奨環境】<br>・PC: 最新版の Google Chrome / Microsoft Edge<br>・iPhone: iOS 18 以降の Safari<br>※MacのSafariや一部のAndroidでは動作しない場合があります。");
         return;
     }
 
+    let adapter, device;
     try {
-        const adapter = await navigator.gpu.requestAdapter();
+        adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-            statsDiv.textContent = "❌ エラー: GPUアダプターの取得に失敗しました。";
+            showError("WebGPU対応のグラフィックアダプターが見つかりませんでした。ブラウザの設定でハードウェアアクセラレーションを有効にしてください。");
             return;
         }
-        const device = await adapter.requestDevice();
+        device = await adapter.requestDevice();
+    } catch (e) {
+        showError("GPUデバイスの初期化に失敗しました。<br>エラー詳細: " + e.message);
+        return;
+    }
 
-        const canvas = document.getElementById("gpuCanvas");
-        const ctx = canvas.getContext("webgpu");
+    // シェーダーのエラー検知を追加
+    device.pushErrorScope('validation');
 
-        // キャンバス解像度の最適化
-        const dpr = window.devicePixelRatio || 1;
+    const canvas = document.getElementById("gpuCanvas");
+    const ctx = canvas.getContext("webgpu");
+
+    const dpr = window.devicePixelRatio || 1;
+    function resizeCanvas() {
         canvas.width = window.innerWidth * dpr;
         canvas.height = window.innerHeight * dpr;
-
-        const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-        ctx.configure({
-            device,
-            format: presentationFormat,
-            alphaMode: "premultiplied",
-        });
-
-        // 2. GPUバッファの作成
-        const ballsBuffer = device.createBuffer({
-            size: ballsData.byteLength,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        });
-
-        const wallsBuffer = device.createBuffer({
-            size: wallsData.byteLength,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        });
-
-        const paramsBuffer = device.createBuffer({
-            size: 32, // 8 * 4バイト
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-
-        const previewBuffer = device.createBuffer({
-            size: 24, // vec2*2 (16) + u32 (4) + padding (4)
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-
-        // 3. パイプライン設定
-        const shaderModule = device.createShaderModule({ code: shaderSource });
-
-        // 物理シミュレーション用 (Compute)
-        const computePipeline = device.createComputePipeline({
-            layout: "auto",
-            compute: { module: shaderModule, entryPoint: "computeMain" }
-        });
-
-        // 玉描画用 (Render)
-        const renderPipeline = device.createRenderPipeline({
-            layout: "auto",
-            vertex: { module: shaderModule, entryPoint: "vertexMain" },
-            fragment: { module: shaderModule, entryPoint: "fragmentMain", targets: [{ format: presentationFormat }] },
-            primitive: { topology: "triangle-strip" }
-        });
-
-        // 壁描画用 (Render)
-        const wallRenderPipeline = device.createRenderPipeline({
-            layout: "auto",
-            vertex: { module: shaderModule, entryPoint: "vertexWall" },
-            fragment: { module: shaderModule, entryPoint: "fragmentWall", targets: [{ format: presentationFormat }] },
-            primitive: { topology: "line-strip" }
-        });
-
-        // 4. バインドグループの作成
-        const bindGroup0 = device.createBindGroup({
-            layout: computePipeline.getBindGroupLayout(0),
-            entries: [
-                { binding: 0, resource: { buffer: ballsBuffer } },
-                { binding: 1, resource: { buffer: wallsBuffer } },
-                { binding: 2, resource: { buffer: paramsBuffer } },
-            ]
-        });
-
-        const bindGroup1 = device.createBindGroup({
-            layout: wallRenderPipeline.getBindGroupLayout(1),
-            entries: [
-                { binding: 0, resource: { buffer: previewBuffer } }
-            ]
-        });
-
-        // --- インタラクション (操作イベント群) ---
-        
-        // UIモード切り替え
-        const btnWall = document.getElementById("btn-wall");
-        const btnBall = document.getElementById("btn-ball");
-        const btnClear = document.getElementById("btn-clear");
-
-        btnWall.onclick = () => { currentMode = 'wall'; btnWall.classList.add('active'); btnBall.classList.remove('active'); };
-        btnBall.onclick = () => { currentMode = 'ball'; btnBall.classList.add('active'); btnWall.classList.remove('active'); };
-        
-        btnClear.onclick = () => {
-            ballCount = 0;
-            wallCount = 0;
-            previewWall.active = 0;
-            // バッファを即座にゼロクリアするためのリセットデータ転送
-            device.queue.writeBuffer(ballsBuffer, 0, new Float32Array(MAX_BALLS * 4));
-            device.queue.writeBuffer(wallsBuffer, 0, new Float32Array(MAX_WALLS * 4));
-        };
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            // マルチタッチに対応
-            const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            
-            const x = (clientX - rect.left) * dpr;
-            const y = (clientY - rect.top) * dpr;
-            return [x, y];
-        }
-
-        // マウス・タッチ共通イベントハンドラ
-        function pointerDown(x, y) {
-            isDrawing = true;
-            startX = x;
-            startY = y;
-
-            if (currentMode === 'ball') {
-                spawnBalls(x, y);
-            } else if (currentMode === 'wall') {
-                previewWall.startX = x;
-                previewWall.startY = y;
-                previewWall.endX = x;
-                previewWall.endY = y;
-                previewWall.active = 1;
-            }
-        }
-
-        function pointerMove(x, y) {
-            if (!isDrawing) return;
-
-            if (currentMode === 'ball') {
-                spawnBalls(x, y);
-            } else if (currentMode === 'wall') {
-                previewWall.endX = x;
-                previewWall.endY = y;
-            }
-        }
-
-        function pointerUp() {
-            if (!isDrawing) return;
-            isDrawing = false;
-
-            if (currentMode === 'wall' && previewWall.active === 1) {
-                const dx = previewWall.endX - previewWall.startX;
-                const dy = previewWall.endY - previewWall.startY;
-                if (Math.sqrt(dx*dx + dy*dy) > 5 && wallCount < MAX_WALLS) {
-                    const offset = wallCount * 4;
-                    wallsData[offset] = previewWall.startX;
-                    wallsData[offset + 1] = previewWall.startY;
-                    wallsData[offset + 2] = previewWall.endX;
-                    wallsData[offset + 3] = previewWall.endY;
-                    wallCount++;
-                    device.queue.writeBuffer(wallsBuffer, 0, wallsData);
-                }
-                previewWall.active = 0;
-            }
-        }
-
-        // 玉の生成処理
-        function spawnBalls(ex, ey) {
-            for(let i=0; i<5; i++){
-                if (ballCount >= MAX_BALLS) break;
-                const offset = ballCount * 4;
-                ballsData[offset]     = ex + (Math.random() - 0.5) * 10;
-                ballsData[offset + 1] = ey + (Math.random() - 0.5) * 10;
-                ballsData[offset + 2] = (Math.random() - 0.5) * 150;
-                ballsData[offset + 3] = (Math.random() - 0.5) * 50;
-                ballCount++;
-            }
-            device.queue.writeBuffer(ballsBuffer, 0, ballsData);
-        }
-
-        // イベントリスナーの登録
-        canvas.addEventListener('mousedown', e => { const [x,y] = getMousePos(e); pointerDown(x,y); });
-        canvas.addEventListener('mousemove', e => { const [x,y] = getMousePos(e); pointerMove(x,y); });
-        window.addEventListener('mouseup', pointerUp);
-
-        canvas.addEventListener('touchstart', e => { if(e.touches.length>0){ const [x,y] = getMousePos(e); pointerDown(x,y); } e.preventDefault(); }, {passive: false});
-        canvas.addEventListener('touchmove', e => { if(e.touches.length>0){ const [x,y] = getMousePos(e); pointerMove(x,y); } e.preventDefault(); }, {passive: false});
-        window.addEventListener('touchend', pointerUp);
-
-        // --- メインループ記述 ---
-        let lastTime = performance.now();
-        let frameCount = 0;
-        let fps = 60;
-
-        setInterval(() => {
-            statsDiv.textContent = `FPS: ${fps} | Balls: ${ballCount} / ${MAX_BALLS} | Walls: ${wallCount} / ${MAX_WALLS}`;
-        }, 250);
-
-        function frame() {
-            const now = performance.now();
-            frameCount++;
-            if (now >= lastTime + 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                lastTime = now;
-            }
-
-            const simParams = new Float32Array([
-                canvas.width, canvas.height,
-                ballCount, wallCount,
-                BALL_RADIUS, 600.0,
-                1/60, 0.0
-            ]);
-            device.queue.writeBuffer(paramsBuffer, 0, simParams);
-
-            const previewParams = new Float32Array([
-                previewWall.startX, previewWall.startY,
-                previewWall.endX, previewWall.endY,
-                previewWall.active, 0.0
-            ]);
-            device.queue.writeBuffer(previewBuffer, 0, previewParams);
-
-            const commandEncoder = device.createCommandEncoder();
-
-            if (ballCount > 0) {
-                const computePass = commandEncoder.beginComputePass();
-                computePass.setPipeline(computePipeline);
-                computePass.setBindGroup(0, bindGroup0);
-                const workgroupCount = Math.ceil(ballCount / 256);
-                computePass.dispatchWorkgroups(workgroupCount);
-                computePass.end();
-            }
-
-            const renderPass = commandEncoder.beginRenderPass({
-                colorAttachments: [{
-                    view: ctx.getCurrentTexture().createView(),
-                    clearValue: { r: 0.07, g: 0.07, b: 0.07, a: 1.0 },
-                    loadOp: "clear",
-                    storeOp: "store"
-                }]
-            });
-
-            renderPass.setPipeline(wallRenderPipeline);
-            renderPass.setBindGroup(0, bindGroup0);
-            renderPass.setBindGroup(1, bindGroup1);
-            renderPass.draw(2, wallCount + 1, 0, 0);
-
-            if (ballCount > 0) {
-                renderPass.setPipeline(renderPipeline);
-                renderPass.setBindGroup(0, bindGroup0);
-                renderPass.draw(4, ballCount, 0, 0);
-            }
-
-            renderPass.end();
-            device.queue.submit([commandEncoder.finish()]);
-
-            requestAnimationFrame(frame);
-        }
-
-        requestAnimationFrame(frame);
-
-    } catch (e) {
-        statsDiv.style.color = "#ff4444";
-        statsDiv.style.whiteSpace = "pre-wrap";
-        statsDiv.textContent = `❌ ランタイムエラーが発生しました:\n${e.message}`;
     }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+    ctx.configure({
+        device,
+        format: presentationFormat,
+        alphaMode: "premultiplied"
+    });
+
+    const ballsBuffer = device.createBuffer({ size: ballsData.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+    const wallsBuffer = device.createBuffer({ size: wallsData.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+    
+    // 32バイト (f32 x 8個分) のバッファーサイズへ調整
+    const paramsBuffer = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const previewBuffer = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+    const shaderModule = device.createShaderModule({ code: shaderSource });
+    
+    // バリデーションエラーをキャッチ
+    const error = await device.popErrorScope();
+    if (error) {
+        showError("WGSL Compilation Error:<br>" + error.message);
+        return;
+    }
+
+    const computePipeline = device.createComputePipeline({ layout: "auto", compute: { module: shaderModule, entryPoint: "computeMain" } });
+    
+    const renderPipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: { module: shaderModule, entryPoint: "vertexMain" },
+        fragment: { module: shaderModule, entryPoint: "fragmentMain", targets: [{ format: presentationFormat }] },
+        primitive: { topology: "triangle-strip" }
+    });
+
+    const wallRenderPipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: { module: shaderModule, entryPoint: "vertexWall" },
+        fragment: { module: shaderModule, entryPoint: "fragmentWall", targets: [{ format: presentationFormat }] },
+        primitive: { topology: "line-strip" }
+    });
+
+    const bindGroup0 = device.createBindGroup({
+        layout: computePipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: ballsBuffer } },
+            { binding: 1, resource: { buffer: wallsBuffer } },
+            { binding: 2, resource: { buffer: paramsBuffer } }
+        ]
+    });
+
+    const bindGroup1 = device.createBindGroup({
+        layout: wallRenderPipeline.getBindGroupLayout(1),
+        entries: [{ binding: 0, resource: { buffer: previewBuffer } }]
+    });
+
+    const btnWall = document.getElementById("btn-wall");
+    const btnBall = document.getElementById("btn-ball");
+    const btnClear = document.getElementById("btn-clear");
+    const statsDiv = document.getElementById("stats");
+
+    btnWall.onclick = () => { currentMode = 'wall'; btnWall.classList.add('active'); btnBall.classList.remove('active'); };
+    btnBall.onclick = () => { currentMode = 'ball'; btnBall.classList.add('active'); btnWall.classList.remove('active'); };
+    btnClear.onclick = () => { ballCount = 0; wallCount = 0; previewWall.active = 0; };
+
+    function getTouchOrMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return [(clientX - rect.left) * dpr, (clientY - rect.top) * dpr];
+    }
+
+    function pointerDown(x, y) {
+        isDrawing = true; startX = x; startY = y;
+        if (currentMode === 'ball') {
+            spawnBalls(x, y);
+        } else {
+            previewWall.startX = x; previewWall.startY = y;
+            previewWall.endX = x; previewWall.endY = y;
+            previewWall.active = 1;
+        }
+    }
+
+    function pointerMove(x, y) {
+        if (!isDrawing) return;
+        if (currentMode === 'ball') {
+            spawnBalls(x, y);
+        } else {
+            previewWall.endX = x; previewWall.endY = y;
+        }
+    }
+
+    function pointerUp() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        if (currentMode === 'wall' && previewWall.active === 1) {
+            const dx = previewWall.endX - previewWall.startX;
+            const dy = previewWall.endY - previewWall.startY;
+            if (Math.sqrt(dx*dx + dy*dy) > 5 && wallCount < MAX_WALLS) {
+                const offset = wallCount * 4;
+                wallsData[offset]     = previewWall.startX;
+                wallsData[offset + 1] = previewWall.startY;
+                wallsData[offset + 2] = previewWall.endX;
+                wallsData[offset + 3] = previewWall.endY;
+                wallCount++;
+                device.queue.writeBuffer(wallsBuffer, 0, wallsData);
+            }
+            previewWall.active = 0;
+        }
+    }
+
+    function spawnBalls(ex, ey) {
+        for(let i=0; i<6; i++){
+            if (ballCount >= MAX_BALLS) break;
+            const offset = ballCount * 4;
+            ballsData[offset]     = ex + (Math.random() - 0.5) * 10;
+            ballsData[offset + 1] = ey + (Math.random() - 0.5) * 10;
+            ballsData[offset + 2] = (Math.random() - 0.5) * 160; 
+            ballsData[offset + 3] = (Math.random() - 0.5) * 40;  
+            ballCount++;
+        }
+        device.queue.writeBuffer(ballsBuffer, 0, ballsData);
+    }
+
+    canvas.addEventListener('mousedown', e => { const [x,y] = getTouchOrMousePos(e); pointerDown(x,y); });
+    canvas.addEventListener('mousemove', e => { const [x,y] = getTouchOrMousePos(e); pointerMove(x,y); });
+    window.addEventListener('mouseup', pointerUp);
+
+    canvas.addEventListener('touchstart', e => { if(e.touches.length > 0) { const [x,y] = getTouchOrMousePos(e); pointerDown(x,y); } e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', e => { if(e.touches.length > 0) { const [x,y] = getTouchOrMousePos(e); pointerMove(x,y); } e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', pointerUp);
+
+    let lastTime = performance.now();
+    let frameCount = 0, fps = 60;
+
+    setInterval(() => {
+        statsDiv.textContent = `FPS: ${fps} | Balls: ${ballCount} / ${MAX_BALLS} | Walls: ${wallCount} / ${MAX_WALLS}`;
+    }, 250);
+
+    function frame() {
+        const now = performance.now();
+        frameCount++;
+        if (now >= lastTime + 1000) { fps = frameCount; frameCount = 0; lastTime = now; }
+
+        // SimParamsのレイアウトに合わせてデータを転送
+        const simParamsBuffer = new ArrayBuffer(32);
+        const simParamsF32 = new Float32Array(simParamsBuffer);
+        const simParamsU32 = new Uint32Array(simParamsBuffer);
+
+        simParamsF32[0] = canvas.width;
+        simParamsF32[1] = canvas.height;
+        simParamsF32[2] = BALL_RADIUS;
+        simParamsF32[3] = 680.0;
+        simParamsF32[4] = 1/60;
+        simParamsU32[5] = ballCount;
+        simParamsU32[6] = wallCount;
+        simParamsU32[7] = 0; // padding
+
+        device.queue.writeBuffer(paramsBuffer, 0, simParamsBuffer);
+
+        // PreviewParamsのデータを転送
+        const previewParamsBuffer = new ArrayBuffer(32);
+        const previewParamsF32 = new Float32Array(previewParamsBuffer);
+        const previewParamsU32 = new Uint32Array(previewParamsBuffer);
+
+        previewParamsF32[0] = previewWall.startX;
+        previewParamsF32[1] = previewWall.startY;
+        previewParamsF32[2] = previewWall.endX;
+        previewParamsF32[3] = previewWall.endY;
+        previewParamsU32[4] = previewWall.active;
+        previewParamsU32[5] = 0; // padding
+
+        device.queue.writeBuffer(previewBuffer, 0, previewParamsBuffer);
+
+        const commandEncoder = device.createCommandEncoder();
+
+        if (ballCount > 0) {
+            const computePass = commandEncoder.beginComputePass();
+            computePass.setPipeline(computePipeline);
+            computePass.setBindGroup(0, bindGroup0);
+            computePass.dispatchWorkgroups(Math.ceil(ballCount / 256));
+            computePass.end();
+        }
+
+        const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [{
+                view: ctx.getCurrentTexture().createView(),
+                clearValue: { r: 1.0, g: 1.0, b: 1.0, a: 1.0 }, 
+                loadOp: "clear", storeOp: "store"
+            }]
+        });
+
+        renderPass.setPipeline(wallRenderPipeline);
+        renderPass.setBindGroup(0, bindGroup0);
+        renderPass.setBindGroup(1, bindGroup1);
+        renderPass.draw(2, wallCount + 1, 0, 0);
+
+        if (ballCount > 0) {
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setBindGroup(0, bindGroup0);
+            renderPass.draw(4, ballCount, 0, 0);
+        }
+
+        renderPass.end();
+        device.queue.submit([commandEncoder.finish()]);
+        
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
 }
 
 init();
-
 </script>
 </body>
 </html>
