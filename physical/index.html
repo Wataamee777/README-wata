@@ -124,9 +124,8 @@ let ballCount = 0;
 const wallsData = new Float32Array(MAX_WALLS * 4);
 let wallCount = 0;
 
-const previewWall = { startX: 0, startY: 0, endX: 0, endY: 0, active: 0 };
+const previewWall = { startX: 0, startY: 0, endX: 0, endY: 0, isActive: 0 };
 
-// WGSLのアライメント規則に合わせて構造体を再設計
 const shaderSource = `
     struct Ball {
         pos: vec2<f32>,
@@ -148,7 +147,7 @@ const shaderSource = `
     struct PreviewParams {
         p0: vec2<f32>,
         p1: vec2<f32>,
-        active: u32,
+        isActive: u32,
         pad: u32,
     }
 
@@ -231,7 +230,7 @@ const shaderSource = `
     fn vertexWall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
         var p = vec2<f32>(0.0);
         if (instanceIdx == params.wallCount) {
-            if (preview.active == 0u) { return vec4<f32>(0.0); }
+            if (preview.isActive == 0u) { return vec4<f32>(0.0); }
             p = select(preview.p0, preview.p1, vertexIdx == 1u);
         } else {
             let w = walls[instanceIdx];
@@ -271,7 +270,6 @@ async function init() {
         return;
     }
 
-    // シェーダーのエラー検知を追加
     device.pushErrorScope('validation');
 
     const canvas = document.getElementById("gpuCanvas");
@@ -294,14 +292,11 @@ async function init() {
 
     const ballsBuffer = device.createBuffer({ size: ballsData.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
     const wallsBuffer = device.createBuffer({ size: wallsData.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
-    
-    // 32バイト (f32 x 8個分) のバッファーサイズへ調整
     const paramsBuffer = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const previewBuffer = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
     const shaderModule = device.createShaderModule({ code: shaderSource });
     
-    // バリデーションエラーをキャッチ
     const error = await device.popErrorScope();
     if (error) {
         showError("WGSL Compilation Error:<br>" + error.message);
@@ -345,7 +340,7 @@ async function init() {
 
     btnWall.onclick = () => { currentMode = 'wall'; btnWall.classList.add('active'); btnBall.classList.remove('active'); };
     btnBall.onclick = () => { currentMode = 'ball'; btnBall.classList.add('active'); btnWall.classList.remove('active'); };
-    btnClear.onclick = () => { ballCount = 0; wallCount = 0; previewWall.active = 0; };
+    btnClear.onclick = () => { ballCount = 0; wallCount = 0; previewWall.isActive = 0; };
 
     function getTouchOrMousePos(e) {
         const rect = canvas.getBoundingClientRect();
@@ -361,7 +356,7 @@ async function init() {
         } else {
             previewWall.startX = x; previewWall.startY = y;
             previewWall.endX = x; previewWall.endY = y;
-            previewWall.active = 1;
+            previewWall.isActive = 1;
         }
     }
 
@@ -377,7 +372,7 @@ async function init() {
     function pointerUp() {
         if (!isDrawing) return;
         isDrawing = false;
-        if (currentMode === 'wall' && previewWall.active === 1) {
+        if (currentMode === 'wall' && previewWall.isActive === 1) {
             const dx = previewWall.endX - previewWall.startX;
             const dy = previewWall.endY - previewWall.startY;
             if (Math.sqrt(dx*dx + dy*dy) > 5 && wallCount < MAX_WALLS) {
@@ -389,7 +384,7 @@ async function init() {
                 wallCount++;
                 device.queue.writeBuffer(wallsBuffer, 0, wallsData);
             }
-            previewWall.active = 0;
+            previewWall.isActive = 0;
         }
     }
 
@@ -426,7 +421,6 @@ async function init() {
         frameCount++;
         if (now >= lastTime + 1000) { fps = frameCount; frameCount = 0; lastTime = now; }
 
-        // SimParamsのレイアウトに合わせてデータを転送
         const simParamsBuffer = new ArrayBuffer(32);
         const simParamsF32 = new Float32Array(simParamsBuffer);
         const simParamsU32 = new Uint32Array(simParamsBuffer);
@@ -438,11 +432,10 @@ async function init() {
         simParamsF32[4] = 1/60;
         simParamsU32[5] = ballCount;
         simParamsU32[6] = wallCount;
-        simParamsU32[7] = 0; // padding
+        simParamsU32[7] = 0;
 
         device.queue.writeBuffer(paramsBuffer, 0, simParamsBuffer);
 
-        // PreviewParamsのデータを転送
         const previewParamsBuffer = new ArrayBuffer(32);
         const previewParamsF32 = new Float32Array(previewParamsBuffer);
         const previewParamsU32 = new Uint32Array(previewParamsBuffer);
@@ -451,8 +444,8 @@ async function init() {
         previewParamsF32[1] = previewWall.startY;
         previewParamsF32[2] = previewWall.endX;
         previewParamsF32[3] = previewWall.endY;
-        previewParamsU32[4] = previewWall.active;
-        previewParamsU32[5] = 0; // padding
+        previewParamsU32[4] = previewWall.isActive;
+        previewParamsU32[5] = 0;
 
         device.queue.writeBuffer(previewBuffer, 0, previewParamsBuffer);
 
