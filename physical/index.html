@@ -51,9 +51,6 @@
         button#btn-clear {
             color: #ff3b30;
         }
-        button#btn-clear:active {
-            background: rgba(255, 59, 48, 0.1);
-        }
         #stats {
             position: absolute;
             bottom: 20px;
@@ -112,7 +109,7 @@
 
 const MAX_BALLS = 32768; 
 const MAX_WALLS = 512;
-const BALL_RADIUS = 6.0;
+const BALL_RADIUS = 12.0; // 見やすいように少し大きめ(12px)に設定したよ！
 
 let currentMode = 'wall'; 
 let isDrawing = false;
@@ -179,21 +176,19 @@ const computeShaderSource = `
                 
                 nextPos = closestPoint + normal * r;
 
-                if (vNormal < 25.0) {
-                    ball.vel = tangent * vTangent * 0.93;
-                } else {
-                    ball.vel = tangent * vTangent * 0.95 - normal * vNormal * 0.35;
+                if (vNormal < 0.0) {
+                    ball.vel = tangent * vTangent * 0.95 - normal * vNormal * 0.5;
                 }
             }
         }
 
         if (nextPos.y > params.canvasSize.y - r) {
             nextPos.y = params.canvasSize.y - r;
-            if (abs(ball.vel.y) < 30.0) { ball.vel.y = 0.0; ball.vel.x *= 0.93; } 
-            else { ball.vel.y = -ball.vel.y * 0.35; }
+            if (abs(ball.vel.y) < 30.0) { ball.vel.y = 0.0; ball.vel.x *= 0.95; } 
+            else { ball.vel.y = -ball.vel.y * 0.4; }
         }
-        if (nextPos.x < r) { nextPos.x = r; ball.vel.x = -ball.vel.x * 0.4; } 
-        else if (nextPos.x > params.canvasSize.x - r) { nextPos.x = params.canvasSize.x - r; ball.vel.x = -ball.vel.x * 0.4; }
+        if (nextPos.x < r) { nextPos.x = r; ball.vel.x = -ball.vel.x * 0.5; } 
+        else if (nextPos.x > params.canvasSize.x - r) { nextPos.x = params.canvasSize.x - r; ball.vel.x = -ball.vel.x * 0.5; }
 
         ball.pos = nextPos;
         balls[index] = ball;
@@ -232,23 +227,40 @@ const renderShaderSource = `
 
     @group(1) @binding(0) var<uniform> preview: PreviewParams;
 
+    struct VertexOutput {
+        @builtin(position) position: vec4<f32>,
+        @location(0) uv: vec2<f32>,
+    }
+
     @vertex
-    fn vertexMain(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
+    fn vertexMain(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> VertexOutput {
         let ball = balls[instanceIdx];
-        var offset = vec2<f32>(0.0);
-        if (vertexIdx == 0u) { offset = vec2<f32>(-1.0, -1.0); }
-        if (vertexIdx == 1u) { offset = vec2<f32>(1.0, -1.0); }
-        if (vertexIdx == 2u) { offset = vec2<f32>(-1.0, 1.0); }
-        if (vertexIdx == 3u) { offset = vec2<f32>(1.0, 1.0); }
-        
+        var offsets = array<vec2<f32>, 4>(
+            vec2<f32>(-1.0, -1.0),
+            vec2<f32>( 1.0, -1.0),
+            vec2<f32>(-1.0,  1.0),
+            vec2<f32>( 1.0,  1.0)
+        );
+        let offset = offsets[vertexIdx];
         let vertexPos = ball.pos + offset * params.ballRadius;
-        let clipPos = (vertexPos / params.canvasSize) * 2.0 - 1.0;
-        return vec4<f32>(clipPos.x, -clipPos.y, 0.0, 1.0);
+        
+        // 画面座標 (0~Width, 0~Height) を Clip Space (-1~1, 1~-1) に正しく変換
+        let zeroToOne = vertexPos / params.canvasSize;
+        let clipPos = vec2<f32>(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
+
+        var output: VertexOutput;
+        output.position = vec4<f32>(clipPos, 0.0, 1.0);
+        output.uv = offset;
+        return output;
     }
 
     @fragment
-    fn fragmentMain() -> @location(0) vec4<f32> {
-        return vec4<f32>(0.0, 0.0, 0.0, 1.0); 
+    fn fragmentMain(in: VertexOutput) -> @location(0) vec4<f32> {
+        // 四角形を丸くくり抜いて「球体」にする処理
+        if (length(in.uv) > 1.0) {
+            discard;
+        }
+        return vec4<f32>(0.1, 0.8, 0.3, 1.0); // 見やすい緑色にしたよ！
     }
 
     @vertex
@@ -261,13 +273,14 @@ const renderShaderSource = `
             if (preview.isActive == 0u) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }
             p = select(preview.p0, preview.p1, vertexIdx == 1u);
         }
-        let clip = (p / params.canvasSize) * 2.0 - 1.0;
-        return vec4<f32>(clip.x, -clip.y, 0.0, 1.0);
+        let zeroToOne = p / params.canvasSize;
+        let clip = vec2<f32>(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
+        return vec4<f32>(clip, 0.0, 1.0);
     }
 
     @fragment
     fn fragmentWall() -> @location(0) vec4<f32> {
-        return vec4<f32>(0.0, 0.0, 0.0, 1.0); 
+        return vec4<f32>(0.1, 0.1, 0.1, 1.0); 
     }
 `;
 
@@ -278,7 +291,7 @@ function showError(message) {
 
 async function init() {
     if (!navigator.gpu) {
-        showError("<strong>お使いの端末・ブラウザはWebGPUに対応していません。</strong><br><br>【推奨環境】<br>・PC: 最新版の Google Chrome / Microsoft Edge<br>・iPhone: iOS 18 以降の Safari");
+        showError("<strong>お使いの環境はWebGPUに対応していません。</strong>");
         return;
     }
 
@@ -286,18 +299,17 @@ async function init() {
     try {
         adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-            showError("WebGPU対応のグラフィックアダプターが見つかりませんでした。");
+            showError("GPUアダプターが見つかりませんでした。");
             return;
         }
         device = await adapter.requestDevice();
     } catch (e) {
-        showError("GPUデバイスの初期化に失敗しました。<br>エラー詳細: " + e.message);
+        showError("GPUの初期化に失敗しました: " + e.message);
         return;
     }
 
     const canvas = document.getElementById("gpuCanvas");
     const ctx = canvas.getContext("webgpu");
-
     const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
     let dpr = window.devicePixelRatio || 1;
@@ -395,7 +407,7 @@ async function init() {
     function pointerDown(x, y) {
         isDrawing = true;
         if (currentMode === 'ball') {
-            spawnBalls(x, y);
+            spawnSingleBall(x, y); // 1回のタップ・クリックで1個生成
         } else {
             previewWall.startX = x; previewWall.startY = y;
             previewWall.endX = x; previewWall.endY = y;
@@ -406,7 +418,7 @@ async function init() {
     function pointerMove(x, y) {
         if (!isDrawing) return;
         if (currentMode === 'ball') {
-            spawnBalls(x, y);
+            spawnSingleBall(x, y); // ドラッグ中も順次生成
         } else {
             previewWall.endX = x; previewWall.endY = y;
         }
@@ -431,17 +443,18 @@ async function init() {
         }
     }
 
-    function spawnBalls(ex, ey) {
-        for(let i=0; i<6; i++){
-            if (ballCount >= MAX_BALLS) break;
-            const offset = ballCount * 4;
-            ballsData[offset]     = ex + (Math.random() - 0.5) * 10;
-            ballsData[offset + 1] = ey + (Math.random() - 0.5) * 10;
-            ballsData[offset + 2] = (Math.random() - 0.5) * 160; 
-            ballsData[offset + 3] = (Math.random() - 0.5) * 40;  
-            ballCount++;
-        }
-        device.queue.writeBuffer(ballsBuffer, 0, ballsData);
+    // 1個ずつボールを追加する関数
+    function spawnSingleBall(ex, ey) {
+        if (ballCount >= MAX_BALLS) return;
+        const offset = ballCount * 4;
+        ballsData[offset]     = ex;
+        ballsData[offset + 1] = ey;
+        ballsData[offset + 2] = (Math.random() - 0.5) * 50; 
+        ballsData[offset + 3] = (Math.random() - 0.5) * 20;  
+        ballCount++;
+        
+        // 変更部分だけGPUバッファに書き込む
+        device.queue.writeBuffer(ballsBuffer, offset * 4, ballsData.subarray(offset, offset + 4));
     }
 
     canvas.addEventListener('mousedown', e => { const [x,y] = getTouchOrMousePos(e); pointerDown(x,y); });
@@ -471,7 +484,7 @@ async function init() {
         simParamsF32[0] = canvas.width;
         simParamsF32[1] = canvas.height;
         simParamsF32[2] = BALL_RADIUS;
-        simParamsF32[3] = 680.0;
+        simParamsF32[3] = 980.0;
         simParamsF32[4] = 1/60;
         simParamsU32[5] = ballCount;
         simParamsU32[6] = wallCount;
