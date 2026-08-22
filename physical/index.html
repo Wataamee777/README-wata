@@ -116,7 +116,6 @@ const BALL_RADIUS = 6.0;
 
 let currentMode = 'wall'; 
 let isDrawing = false;
-let startX = 0, startY = 0;
 
 const ballsData = new Float32Array(MAX_BALLS * 4);
 let ballCount = 0;
@@ -126,8 +125,8 @@ let wallCount = 0;
 
 const previewWall = { startX: 0, startY: 0, endX: 0, endY: 0, isActive: 0 };
 
-// WGSL Shader
-const shaderSource = `
+// WGSL Compute Shader
+const computeShaderSource = `
     struct Ball {
         pos: vec2<f32>,
         vel: vec2<f32>,
@@ -145,18 +144,10 @@ const shaderSource = `
         wallCount: u32,
         pad: u32,
     }
-    struct PreviewParams {
-        p0: vec2<f32>,
-        p1: vec2<f32>,
-        isActive: u32,
-        pad: u32,
-    }
 
-    // Storage Buffer access set to read_write for compute pass update
     @group(0) @binding(0) var<storage, read_write> balls: array<Ball>;
     @group(0) @binding(1) var<storage, read> walls: array<Wall>;
     @group(0) @binding(2) var<uniform> params: SimParams;
-    @group(1) @binding(0) var<uniform> preview: PreviewParams;
 
     @compute @workgroup_size(256)
     fn computeMain(@builtin(global_invocation_id) global_id: vec3<u32>) {
@@ -207,6 +198,39 @@ const shaderSource = `
         ball.pos = nextPos;
         balls[index] = ball;
     }
+`;
+
+// WGSL Render Shader
+const renderShaderSource = `
+    struct Ball {
+        pos: vec2<f32>,
+        vel: vec2<f32>,
+    }
+    struct Wall {
+        p0: vec2<f32>,
+        p1: vec2<f32>,
+    }
+    struct SimParams {
+        canvasSize: vec2<f32>,
+        ballRadius: f32,
+        gravity: f32,
+        dt: f32,
+        ballCount: u32,
+        wallCount: u32,
+        pad: u32,
+    }
+    struct PreviewParams {
+        p0: vec2<f32>,
+        p1: vec2<f32>,
+        isActive: u32,
+        pad: u32,
+    }
+
+    @group(0) @binding(0) var<storage, read> balls: array<Ball>;
+    @group(0) @binding(1) var<storage, read> walls: array<Wall>;
+    @group(0) @binding(2) var<uniform> params: SimParams;
+
+    @group(1) @binding(0) var<uniform> preview: PreviewParams;
 
     @vertex
     fn vertexMain(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
@@ -230,12 +254,12 @@ const shaderSource = `
     @vertex
     fn vertexWall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
         var p = vec2<f32>(0.0);
-        if (instanceIdx == params.wallCount) {
-            if (preview.isActive == 0u) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }
-            p = select(preview.p0, preview.p1, vertexIdx == 1u);
-        } else {
+        if (instanceIdx < params.wallCount) {
             let w = walls[instanceIdx];
             p = select(w.p0, w.p1, vertexIdx == 1u);
+        } else {
+            if (preview.isActive == 0u) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }
+            p = select(preview.p0, preview.p1, vertexIdx == 1u);
         }
         let clip = (p / params.canvasSize) * 2.0 - 1.0;
         return vec4<f32>(clip.x, -clip.y, 0.0, 1.0);
@@ -254,7 +278,7 @@ function showError(message) {
 
 async function init() {
     if (!navigator.gpu) {
-        showError("<strong>お使いの端末・ブラウザはWebGPUに対応していません。</strong><br><br>【推奨環境】<br>・PC: 最新版の Google Chrome / Microsoft Edge<br>・iPhone: iOS 18 以降の Safari<br>※MacのSafariや一部のAndroidでは動作しない場合があります。");
+        showError("<strong>お使いの端末・ブラウザはWebGPUに対応していません。</strong><br><br>【推奨環境】<br>・PC: 最新版の Google Chrome / Microsoft Edge<br>・iPhone: iOS 18 以降の Safari");
         return;
     }
 
@@ -262,7 +286,7 @@ async function init() {
     try {
         adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-            showError("WebGPU対応のグラフィックアダプターが見つかりませんでした。ブラウザの設定でハードウェアアクセラレーションを有効にしてください。");
+            showError("WebGPU対応のグラフィックアダプターが見つかりませんでした。");
             return;
         }
         device = await adapter.requestDevice();
@@ -271,27 +295,25 @@ async function init() {
         return;
     }
 
-    device.pushErrorScope('validation');
-
     const canvas = document.getElementById("gpuCanvas");
     const ctx = canvas.getContext("webgpu");
 
-    const dpr = window.devicePixelRatio || 1;
+    const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+
+    let dpr = window.devicePixelRatio || 1;
     function resizeCanvas() {
+        dpr = window.devicePixelRatio || 1;
         canvas.width = window.innerWidth * dpr;
         canvas.height = window.innerHeight * dpr;
+        ctx.configure({
+            device,
+            format: presentationFormat,
+            alphaMode: "premultiplied"
+        });
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-    ctx.configure({
-        device,
-        format: presentationFormat,
-        alphaMode: "premultiplied"
-    });
-
-    // ballsBuffer に COPY_SRC / STORAGE / COPY_DST を正しく適用
     const ballsBuffer = device.createBuffer({ 
         size: ballsData.byteLength, 
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST 
@@ -309,34 +331,29 @@ async function init() {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST 
     });
 
-    const shaderModule = device.createShaderModule({ code: shaderSource });
-    
-    const error = await device.popErrorScope();
-    if (error) {
-        showError("WGSL Compilation Error:<br>" + error.message);
-        return;
-    }
+    const computeModule = device.createShaderModule({ code: computeShaderSource });
+    const renderModule = device.createShaderModule({ code: renderShaderSource });
 
     const computePipeline = device.createComputePipeline({ 
         layout: "auto", 
-        compute: { module: shaderModule, entryPoint: "computeMain" } 
+        compute: { module: computeModule, entryPoint: "computeMain" } 
     });
     
     const renderPipeline = device.createRenderPipeline({
         layout: "auto",
-        vertex: { module: shaderModule, entryPoint: "vertexMain" },
-        fragment: { module: shaderModule, entryPoint: "fragmentMain", targets: [{ format: presentationFormat }] },
+        vertex: { module: renderModule, entryPoint: "vertexMain" },
+        fragment: { module: renderModule, entryPoint: "fragmentMain", targets: [{ format: presentationFormat }] },
         primitive: { topology: "triangle-strip" }
     });
 
     const wallRenderPipeline = device.createRenderPipeline({
         layout: "auto",
-        vertex: { module: shaderModule, entryPoint: "vertexWall" },
-        fragment: { module: shaderModule, entryPoint: "fragmentWall", targets: [{ format: presentationFormat }] },
-        primitive: { topology: "line-strip" }
+        vertex: { module: renderModule, entryPoint: "vertexWall" },
+        fragment: { module: renderModule, entryPoint: "fragmentWall", targets: [{ format: presentationFormat }] },
+        primitive: { topology: "line-list" }
     });
 
-    const bindGroup0 = device.createBindGroup({
+    const computeBindGroup = device.createBindGroup({
         layout: computePipeline.getBindGroupLayout(0),
         entries: [
             { binding: 0, resource: { buffer: ballsBuffer } },
@@ -345,7 +362,16 @@ async function init() {
         ]
     });
 
-    const bindGroup1 = device.createBindGroup({
+    const renderBindGroup0 = device.createBindGroup({
+        layout: renderPipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: ballsBuffer } },
+            { binding: 1, resource: { buffer: wallsBuffer } },
+            { binding: 2, resource: { buffer: paramsBuffer } }
+        ]
+    });
+
+    const renderBindGroup1 = device.createBindGroup({
         layout: wallRenderPipeline.getBindGroupLayout(1),
         entries: [{ binding: 0, resource: { buffer: previewBuffer } }]
     });
@@ -367,7 +393,7 @@ async function init() {
     }
 
     function pointerDown(x, y) {
-        isDrawing = true; startX = x; startY = y;
+        isDrawing = true;
         if (currentMode === 'ball') {
             spawnBalls(x, y);
         } else {
@@ -471,7 +497,7 @@ async function init() {
         if (ballCount > 0) {
             const computePass = commandEncoder.beginComputePass();
             computePass.setPipeline(computePipeline);
-            computePass.setBindGroup(0, bindGroup0);
+            computePass.setBindGroup(0, computeBindGroup);
             computePass.dispatchWorkgroups(Math.ceil(ballCount / 256));
             computePass.end();
         }
@@ -484,16 +510,19 @@ async function init() {
             }]
         });
 
-        // 壁の描画
-        renderPass.setPipeline(wallRenderPipeline);
-        renderPass.setBindGroup(0, bindGroup0);
-        renderPass.setBindGroup(1, bindGroup1);
-        renderPass.draw(2, wallCount + 1, 0, 0);
+        // 壁およびプレビュー線の描画
+        let totalWallsToDraw = wallCount + (previewWall.isActive ? 1 : 0);
+        if (totalWallsToDraw > 0) {
+            renderPass.setPipeline(wallRenderPipeline);
+            renderPass.setBindGroup(0, renderBindGroup0);
+            renderPass.setBindGroup(1, renderBindGroup1);
+            renderPass.draw(2, totalWallsToDraw, 0, 0);
+        }
 
         // 玉の描画
         if (ballCount > 0) {
             renderPass.setPipeline(renderPipeline);
-            renderPass.setBindGroup(0, bindGroup0);
+            renderPass.setBindGroup(0, renderBindGroup0);
             renderPass.draw(4, ballCount, 0, 0);
         }
 
