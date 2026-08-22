@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebGPU Physics Simulation</title>
+    <title>WebGPU Physics Simulation Fix</title>
     <style>
         html, body {
             margin: 0;
@@ -29,7 +29,6 @@
             box-shadow: 0 4px 30px rgba(0,0,0,0.08);
             z-index: 10;
             border: 1px solid rgba(0,0,0,0.1);
-            backdrop-filter: blur(8px);
         }
         button {
             background: transparent;
@@ -40,12 +39,10 @@
             font-weight: 600;
             border-radius: 30px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         button.active {
             background: #000000;
             color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         button#btn-clear {
             color: #ff3b30;
@@ -129,7 +126,8 @@ const computeShaderSource = `
         dt: f32,
         ballCount: u32,
         wallCount: u32,
-        pad: u32,
+        pad0: u32,
+        pad1: u32,
     }
 
     @group(0) @binding(0) var<storage, read_write> balls: array<Ball>;
@@ -195,28 +193,25 @@ const renderShaderSource = `
         dt: f32,
         ballCount: u32,
         wallCount: u32,
-        pad: u32,
+        pad0: u32,
+        pad1: u32,
     }
     struct PreviewParams {
         p0: vec2<f32>,
         p1: vec2<f32>,
         isActive: u32,
-        pad: u32,
+        pad0: u32,
+        pad1: u32,
+        pad2: u32,
     }
 
     @group(0) @binding(0) var<storage, read> balls: array<Ball>;
     @group(0) @binding(1) var<storage, read> walls: array<Wall>;
     @group(0) @binding(2) var<uniform> params: SimParams;
-
-    @group(1) @binding(0) var<uniform> preview: PreviewParams;
-
-    struct VertexOutput {
-        @builtin(position) position: vec4<f32>,
-        @location(0) uv: vec2<f32>,
-    }
+    @group(0) @binding(3) var<uniform> preview: PreviewParams;
 
     @vertex
-    fn vertexBall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> VertexOutput {
+    fn vertexBall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> @builtin(position) vec4<f32> {
         let ball = balls[instanceIdx];
         var offsets = array<vec2<f32>, 4>(
             vec2<f32>(-1.0, -1.0),
@@ -227,21 +222,15 @@ const renderShaderSource = `
         let offset = offsets[vertexIdx];
         let vertexPos = ball.pos + offset * params.ballRadius;
         
-        let zeroToOne = vertexPos / params.canvasSize;
-        let clipPos = vec2<f32>(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
+        let x = (vertexPos.x / params.canvasSize.x) * 2.0 - 1.0;
+        let y = 1.0 - (vertexPos.y / params.canvasSize.y) * 2.0;
 
-        var output: VertexOutput;
-        output.position = vec4<f32>(clipPos, 0.0, 1.0);
-        output.uv = offset;
-        return output;
+        return vec4<f32>(x, y, 0.0, 1.0);
     }
 
     @fragment
-    fn fragmentBall(in: VertexOutput) -> @location(0) vec4<f32> {
-        if (dot(in.uv, in.uv) > 1.0) {
-            discard;
-        }
-        return vec4<f32>(0.1, 0.7, 0.3, 1.0);
+    fn fragmentBall() -> @location(0) vec4<f32> {
+        return vec4<f32>(0.0, 0.8, 0.2, 1.0);
     }
 
     @vertex
@@ -253,14 +242,16 @@ const renderShaderSource = `
         } else {
             p = select(preview.p0, preview.p1, vertexIdx == 1u);
         }
-        let zeroToOne = p / params.canvasSize;
-        let clip = vec2<f32>(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
-        return vec4<f32>(clip, 0.0, 1.0);
+        
+        let x = (p.x / params.canvasSize.x) * 2.0 - 1.0;
+        let y = 1.0 - (p.y / params.canvasSize.y) * 2.0;
+
+        return vec4<f32>(x, y, 0.0, 1.0);
     }
 
     @fragment
     fn fragmentWall() -> @location(0) vec4<f32> {
-        return vec4<f32>(0.1, 0.1, 0.1, 1.0);
+        return vec4<f32>(0.0, 0.0, 0.0, 1.0);
     }
 `;
 
@@ -292,11 +283,9 @@ async function init() {
     const ctx = canvas.getContext("webgpu");
     const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
-    let dpr = window.devicePixelRatio || 1;
     function resizeCanvas() {
-        dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         ctx.configure({
             device,
             format: presentationFormat,
@@ -326,26 +315,21 @@ async function init() {
     const computeModule = device.createShaderModule({ code: computeShaderSource });
     const renderModule = device.createShaderModule({ code: renderShaderSource });
 
-    const bindGroupLayout0 = device.createBindGroupLayout({
+    const bindGroupLayout = device.createBindGroupLayout({
         entries: [
             { binding: 0, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "storage" } },
             { binding: 1, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
-            { binding: 2, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "uniform" } }
-        ]
-    });
-
-    const bindGroupLayout1 = device.createBindGroupLayout({
-        entries: [
-            { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } }
+            { binding: 2, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
+            { binding: 3, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } }
         ]
     });
 
     const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout0, bindGroupLayout1]
+        bindGroupLayouts: [bindGroupLayout]
     });
 
     const computePipeline = device.createComputePipeline({ 
-        layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout0] }), 
+        layout: pipelineLayout, 
         compute: { module: computeModule, entryPoint: "computeMain" } 
     });
     
@@ -363,18 +347,14 @@ async function init() {
         primitive: { topology: "line-list" }
     });
 
-    const bindGroup0 = device.createBindGroup({
-        layout: bindGroupLayout0,
+    const bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
         entries: [
             { binding: 0, resource: { buffer: ballsBuffer } },
             { binding: 1, resource: { buffer: wallsBuffer } },
-            { binding: 2, resource: { buffer: paramsBuffer } }
+            { binding: 2, resource: { buffer: paramsBuffer } },
+            { binding: 3, resource: { buffer: previewBuffer } }
         ]
-    });
-
-    const bindGroup1 = device.createBindGroup({
-        layout: bindGroupLayout1,
-        entries: [{ binding: 0, resource: { buffer: previewBuffer } }]
     });
 
     const btnWall = document.getElementById("btn-wall");
@@ -386,11 +366,11 @@ async function init() {
     btnBall.onclick = () => { currentMode = 'ball'; btnBall.classList.add('active'); btnWall.classList.remove('active'); };
     btnClear.onclick = () => { ballCount = 0; wallCount = 0; previewWall.isActive = 0; };
 
-    function getTouchOrMousePos(e) {
+    function getPos(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return [(clientX - rect.left) * dpr, (clientY - rect.top) * dpr];
+        return [clientX - rect.left, clientY - rect.top];
     }
 
     function pointerDown(x, y) {
@@ -444,12 +424,12 @@ async function init() {
         device.queue.writeBuffer(ballsBuffer, offset * 4, ballsData.subarray(offset, offset + 4));
     }
 
-    canvas.addEventListener('mousedown', e => { const [x,y] = getTouchOrMousePos(e); pointerDown(x,y); });
-    canvas.addEventListener('mousemove', e => { const [x,y] = getTouchOrMousePos(e); pointerMove(x,y); });
+    canvas.addEventListener('mousedown', e => { const [x,y] = getPos(e); pointerDown(x,y); });
+    canvas.addEventListener('mousemove', e => { const [x,y] = getPos(e); pointerMove(x,y); });
     window.addEventListener('mouseup', pointerUp);
 
-    canvas.addEventListener('touchstart', e => { if(e.touches.length > 0) { const [x,y] = getTouchOrMousePos(e); pointerDown(x,y); } e.preventDefault(); }, {passive: false});
-    canvas.addEventListener('touchmove', e => { if(e.touches.length > 0) { const [x,y] = getTouchOrMousePos(e); pointerMove(x,y); } e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchstart', e => { if(e.touches.length > 0) { const [x,y] = getPos(e); pointerDown(x,y); } e.preventDefault(); }, {passive: false});
+    canvas.addEventListener('touchmove', e => { if(e.touches.length > 0) { const [x,y] = getPos(e); pointerMove(x,y); } e.preventDefault(); }, {passive: false});
     window.addEventListener('touchend', pointerUp);
 
     let lastTime = performance.now();
@@ -475,7 +455,6 @@ async function init() {
         simParamsF32[4] = 1/60;
         simParamsU32[5] = ballCount;
         simParamsU32[6] = wallCount;
-        simParamsU32[7] = 0;
 
         device.queue.writeBuffer(paramsBuffer, 0, simParamsBuffer);
 
@@ -488,7 +467,6 @@ async function init() {
         previewParamsF32[2] = previewWall.endX;
         previewParamsF32[3] = previewWall.endY;
         previewParamsU32[4] = previewWall.isActive;
-        previewParamsU32[5] = 0;
 
         device.queue.writeBuffer(previewBuffer, 0, previewParamsBuffer);
 
@@ -497,7 +475,7 @@ async function init() {
         if (ballCount > 0) {
             const computePass = commandEncoder.beginComputePass();
             computePass.setPipeline(computePipeline);
-            computePass.setBindGroup(0, bindGroup0);
+            computePass.setBindGroup(0, bindGroup);
             computePass.dispatchWorkgroups(Math.ceil(ballCount / 256));
             computePass.end();
         }
@@ -510,8 +488,7 @@ async function init() {
             }]
         });
 
-        renderPass.setBindGroup(0, bindGroup0);
-        renderPass.setBindGroup(1, bindGroup1);
+        renderPass.setBindGroup(0, bindGroup);
 
         let totalWallsToDraw = wallCount + (previewWall.isActive ? 1 : 0);
         if (totalWallsToDraw > 0) {
