@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebGPU 0%_0%_0% Hybrid Physics Engine</title>
+    <title>WebGPU Physics Simulation</title>
     <style>
         html, body {
             margin: 0;
@@ -30,7 +30,6 @@
             z-index: 10;
             border: 1px solid rgba(0,0,0,0.1);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
         }
         button {
             background: transparent;
@@ -64,7 +63,6 @@
             border-radius: 6px;
             pointer-events: none;
             border: 1px solid rgba(0,0,0,0.1);
-            backdrop-filter: blur(4px);
         }
         #error-overlay {
             position: absolute;
@@ -80,7 +78,6 @@
             box-sizing: border-box;
             z-index: 100;
             font-size: 16px;
-            line-height: 1.6;
         }
         canvas {
             display: block;
@@ -109,7 +106,7 @@
 
 const MAX_BALLS = 32768; 
 const MAX_WALLS = 512;
-const BALL_RADIUS = 12.0; // 見やすいように少し大きめ(12px)に設定したよ！
+const BALL_RADIUS = 12.0;
 
 let currentMode = 'wall'; 
 let isDrawing = false;
@@ -122,16 +119,9 @@ let wallCount = 0;
 
 const previewWall = { startX: 0, startY: 0, endX: 0, endY: 0, isActive: 0 };
 
-// WGSL Compute Shader
 const computeShaderSource = `
-    struct Ball {
-        pos: vec2<f32>,
-        vel: vec2<f32>,
-    }
-    struct Wall {
-        p0: vec2<f32>,
-        p1: vec2<f32>,
-    }
+    struct Ball { pos: vec2<f32>, vel: vec2<f32> }
+    struct Wall { p0: vec2<f32>, p1: vec2<f32> }
     struct SimParams {
         canvasSize: vec2<f32>,
         ballRadius: f32,
@@ -195,16 +185,9 @@ const computeShaderSource = `
     }
 `;
 
-// WGSL Render Shader
 const renderShaderSource = `
-    struct Ball {
-        pos: vec2<f32>,
-        vel: vec2<f32>,
-    }
-    struct Wall {
-        p0: vec2<f32>,
-        p1: vec2<f32>,
-    }
+    struct Ball { pos: vec2<f32>, vel: vec2<f32> }
+    struct Wall { p0: vec2<f32>, p1: vec2<f32> }
     struct SimParams {
         canvasSize: vec2<f32>,
         ballRadius: f32,
@@ -233,7 +216,7 @@ const renderShaderSource = `
     }
 
     @vertex
-    fn vertexMain(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> VertexOutput {
+    fn vertexBall(@builtin(vertex_index) vertexIdx: u32, @builtin(instance_index) instanceIdx: u32) -> VertexOutput {
         let ball = balls[instanceIdx];
         var offsets = array<vec2<f32>, 4>(
             vec2<f32>(-1.0, -1.0),
@@ -244,7 +227,6 @@ const renderShaderSource = `
         let offset = offsets[vertexIdx];
         let vertexPos = ball.pos + offset * params.ballRadius;
         
-        // 画面座標 (0~Width, 0~Height) を Clip Space (-1~1, 1~-1) に正しく変換
         let zeroToOne = vertexPos / params.canvasSize;
         let clipPos = vec2<f32>(zeroToOne.x * 2.0 - 1.0, 1.0 - zeroToOne.y * 2.0);
 
@@ -255,12 +237,11 @@ const renderShaderSource = `
     }
 
     @fragment
-    fn fragmentMain(in: VertexOutput) -> @location(0) vec4<f32> {
-        // 四角形を丸くくり抜いて「球体」にする処理
-        if (length(in.uv) > 1.0) {
+    fn fragmentBall(in: VertexOutput) -> @location(0) vec4<f32> {
+        if (dot(in.uv, in.uv) > 1.0) {
             discard;
         }
-        return vec4<f32>(0.1, 0.8, 0.3, 1.0); // 見やすい緑色にしたよ！
+        return vec4<f32>(0.1, 0.7, 0.3, 1.0);
     }
 
     @vertex
@@ -270,7 +251,6 @@ const renderShaderSource = `
             let w = walls[instanceIdx];
             p = select(w.p0, w.p1, vertexIdx == 1u);
         } else {
-            if (preview.isActive == 0u) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }
             p = select(preview.p0, preview.p1, vertexIdx == 1u);
         }
         let zeroToOne = p / params.canvasSize;
@@ -280,7 +260,7 @@ const renderShaderSource = `
 
     @fragment
     fn fragmentWall() -> @location(0) vec4<f32> {
-        return vec4<f32>(0.1, 0.1, 0.1, 1.0); 
+        return vec4<f32>(0.1, 0.1, 0.1, 1.0);
     }
 `;
 
@@ -320,7 +300,7 @@ async function init() {
         ctx.configure({
             device,
             format: presentationFormat,
-            alphaMode: "premultiplied"
+            alphaMode: "opaque"
         });
     }
     resizeCanvas();
@@ -346,27 +326,45 @@ async function init() {
     const computeModule = device.createShaderModule({ code: computeShaderSource });
     const renderModule = device.createShaderModule({ code: renderShaderSource });
 
+    const bindGroupLayout0 = device.createBindGroupLayout({
+        entries: [
+            { binding: 0, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "storage" } },
+            { binding: 1, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
+            { binding: 2, visibility: GPUShaderStage.COMPUTE | GPUShaderStage.VERTEX, buffer: { type: "uniform" } }
+        ]
+    });
+
+    const bindGroupLayout1 = device.createBindGroupLayout({
+        entries: [
+            { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } }
+        ]
+    });
+
+    const pipelineLayout = device.createPipelineLayout({
+        bindGroupLayouts: [bindGroupLayout0, bindGroupLayout1]
+    });
+
     const computePipeline = device.createComputePipeline({ 
-        layout: "auto", 
+        layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout0] }), 
         compute: { module: computeModule, entryPoint: "computeMain" } 
     });
     
-    const renderPipeline = device.createRenderPipeline({
-        layout: "auto",
-        vertex: { module: renderModule, entryPoint: "vertexMain" },
-        fragment: { module: renderModule, entryPoint: "fragmentMain", targets: [{ format: presentationFormat }] },
+    const ballPipeline = device.createRenderPipeline({
+        layout: pipelineLayout,
+        vertex: { module: renderModule, entryPoint: "vertexBall" },
+        fragment: { module: renderModule, entryPoint: "fragmentBall", targets: [{ format: presentationFormat }] },
         primitive: { topology: "triangle-strip" }
     });
 
-    const wallRenderPipeline = device.createRenderPipeline({
-        layout: "auto",
+    const wallPipeline = device.createRenderPipeline({
+        layout: pipelineLayout,
         vertex: { module: renderModule, entryPoint: "vertexWall" },
         fragment: { module: renderModule, entryPoint: "fragmentWall", targets: [{ format: presentationFormat }] },
         primitive: { topology: "line-list" }
     });
 
-    const computeBindGroup = device.createBindGroup({
-        layout: computePipeline.getBindGroupLayout(0),
+    const bindGroup0 = device.createBindGroup({
+        layout: bindGroupLayout0,
         entries: [
             { binding: 0, resource: { buffer: ballsBuffer } },
             { binding: 1, resource: { buffer: wallsBuffer } },
@@ -374,17 +372,8 @@ async function init() {
         ]
     });
 
-    const renderBindGroup0 = device.createBindGroup({
-        layout: renderPipeline.getBindGroupLayout(0),
-        entries: [
-            { binding: 0, resource: { buffer: ballsBuffer } },
-            { binding: 1, resource: { buffer: wallsBuffer } },
-            { binding: 2, resource: { buffer: paramsBuffer } }
-        ]
-    });
-
-    const renderBindGroup1 = device.createBindGroup({
-        layout: wallRenderPipeline.getBindGroupLayout(1),
+    const bindGroup1 = device.createBindGroup({
+        layout: bindGroupLayout1,
         entries: [{ binding: 0, resource: { buffer: previewBuffer } }]
     });
 
@@ -407,7 +396,7 @@ async function init() {
     function pointerDown(x, y) {
         isDrawing = true;
         if (currentMode === 'ball') {
-            spawnSingleBall(x, y); // 1回のタップ・クリックで1個生成
+            spawnSingleBall(x, y);
         } else {
             previewWall.startX = x; previewWall.startY = y;
             previewWall.endX = x; previewWall.endY = y;
@@ -418,7 +407,7 @@ async function init() {
     function pointerMove(x, y) {
         if (!isDrawing) return;
         if (currentMode === 'ball') {
-            spawnSingleBall(x, y); // ドラッグ中も順次生成
+            spawnSingleBall(x, y);
         } else {
             previewWall.endX = x; previewWall.endY = y;
         }
@@ -443,7 +432,6 @@ async function init() {
         }
     }
 
-    // 1個ずつボールを追加する関数
     function spawnSingleBall(ex, ey) {
         if (ballCount >= MAX_BALLS) return;
         const offset = ballCount * 4;
@@ -453,7 +441,6 @@ async function init() {
         ballsData[offset + 3] = (Math.random() - 0.5) * 20;  
         ballCount++;
         
-        // 変更部分だけGPUバッファに書き込む
         device.queue.writeBuffer(ballsBuffer, offset * 4, ballsData.subarray(offset, offset + 4));
     }
 
@@ -510,7 +497,7 @@ async function init() {
         if (ballCount > 0) {
             const computePass = commandEncoder.beginComputePass();
             computePass.setPipeline(computePipeline);
-            computePass.setBindGroup(0, computeBindGroup);
+            computePass.setBindGroup(0, bindGroup0);
             computePass.dispatchWorkgroups(Math.ceil(ballCount / 256));
             computePass.end();
         }
@@ -523,19 +510,17 @@ async function init() {
             }]
         });
 
-        // 壁およびプレビュー線の描画
+        renderPass.setBindGroup(0, bindGroup0);
+        renderPass.setBindGroup(1, bindGroup1);
+
         let totalWallsToDraw = wallCount + (previewWall.isActive ? 1 : 0);
         if (totalWallsToDraw > 0) {
-            renderPass.setPipeline(wallRenderPipeline);
-            renderPass.setBindGroup(0, renderBindGroup0);
-            renderPass.setBindGroup(1, renderBindGroup1);
+            renderPass.setPipeline(wallPipeline);
             renderPass.draw(2, totalWallsToDraw, 0, 0);
         }
 
-        // 玉の描画
         if (ballCount > 0) {
-            renderPass.setPipeline(renderPipeline);
-            renderPass.setBindGroup(0, renderBindGroup0);
+            renderPass.setPipeline(ballPipeline);
             renderPass.draw(4, ballCount, 0, 0);
         }
 
