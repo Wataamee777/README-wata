@@ -151,7 +151,7 @@ const shaderSource = `
         pad: u32,
     }
 
-    @group(0) @binding(0) var<storage, read_write> balls: array<Ball>;
+    @group(0) @binding(0) var<storage, read> balls: array<Ball>;
     @group(0) @binding(1) var<storage, read> walls: array<Wall>;
     @group(0) @binding(2) var<uniform> params: SimParams;
 
