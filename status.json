@@ -4,16 +4,16 @@
     "status": "warning",
     "nslookup": true,
     "http": 403,
-    "http_ms": 54,
-    "checked_at": "2026-08-25T21:21:14Z"
+    "http_ms": 24,
+    "checked_at": "2026-08-25T21:48:05Z"
   },
   "sakura.kotoca.net": {
     "type": "site",
     "status": "warning",
     "nslookup": true,
     "http": 403,
-    "http_ms": 32,
-    "checked_at": "2026-08-25T21:21:14Z"
+    "http_ms": 26,
+    "checked_at": "2026-08-25T21:48:05Z"
   },
   "bot.sakurahp.f5.si": {
     "type": "discord_bot",
